@@ -4,7 +4,7 @@ services:
   hicdex:
     build: .
     depends_on:
-      - powa-repository
+      - db
     volumes:
       - ./src/hicdex/dipdup.yml:/home/dipdup/dipdup.yml
       - ./src/hicdex/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
@@ -37,7 +37,7 @@ services:
     expose:
       - 8080
     depends_on:
-      - powa-repository
+      - db
     restart: always
     environment:
       - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
