@@ -1,8 +1,15 @@
+hicdex.com {
+	root * /srv/hicdex.com
+	try_files {path}.html {path} /
+	file_server
+}
+
 api.hicdex.com {
 	handle_path /graphiql* {
-		root * /srv
+		root * /srv/api.hicdex.com
 		file_server
 	}
+
 	redir /graphiql /graphiql/
 	redir / /graphiql/
 

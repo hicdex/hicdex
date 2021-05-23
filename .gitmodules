@@ -7,3 +7,6 @@
 [submodule "hicdex-graphiql"]
 	path = hicdex-graphiql
 	url = git@github.com:hicdex/hicdex-graphiql.git
+[submodule "hicdex-hen-graphql-samples"]
+	path = hicdex-hen-graphql-samples
+	url = git@github.com:hicdex/hicdex-hen-graphql-samples.git
