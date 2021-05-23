@@ -4,3 +4,6 @@
 [submodule "hicdex-metadata"]
 	path = hicdex-metadata
 	url = git@github.com:hicdex/hicdex-metadata.git
+[submodule "hicdex-graphiql"]
+	path = hicdex-graphiql
+	url = git@github.com:hicdex/hicdex-graphiql.git
