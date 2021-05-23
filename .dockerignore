@@ -12,3 +12,6 @@ tests
 *.zip
 docker-compose.yml
 Dockerfile
+hicdex-graphiql/
+hicdex-hen-graphql-samples/
+hicdex-metadata/
