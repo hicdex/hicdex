@@ -1,0 +1,15 @@
+api.hicdex.com {
+	handle_path /graphiql* {
+		root * /srv
+		file_server
+	}
+	redir /graphiql /graphiql/
+	redir / /graphiql/
+
+	reverse_proxy * hasura:8080 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

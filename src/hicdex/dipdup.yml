@@ -3,7 +3,7 @@ package: hicdex
 
 database:
   kind: sqlite
-  path: hicdex.sqlite3
+  path: hic_et_nunc.sqlite3
 
 contracts:
   HEN_objkts:
@@ -16,7 +16,7 @@ contracts:
 datasources:
   tzkt_mainnet:
     kind: tzkt
-    url: ${TZKT_URL:-https://staging.api.tzkt.io}
+    url: ${TZKT_URL:-https://api.tzkt.io}
 
 indexes:
   hen_mainnet:
@@ -48,3 +48,8 @@ indexes:
           - type: transaction
             destination: HEN_minter
             entrypoint: collect
+      # - callback: on_transfer
+      #   pattern:
+      #     - type: transaction
+      #       destination: HEN_objkts
+      #       entrypoint: transfer

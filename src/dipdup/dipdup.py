@@ -53,6 +53,10 @@ class DipDup:
 
         async with tortoise_wrapper(url, models):
             await self.initialize_database()
+            # if self._config.database.kind != 'sqlite':
+            #     await Tortoise._connections['default'].execute_script(
+            #         'ALTER TABLE "hicdex"."token_tag" ADD PRIMARY KEY ("token_id", "tag_id");'
+            #     )
 
             await self._config.initialize()
 

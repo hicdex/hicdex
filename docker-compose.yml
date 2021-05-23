@@ -4,10 +4,11 @@ services:
   hicdex:
     build: .
     depends_on:
-      - db
+      - powa-repository
     volumes:
       - ./src/hicdex/dipdup.yml:/home/dipdup/dipdup.yml
       - ./src/hicdex/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
+      - ./hicdex-metadata:/home/dipdup/metadata
     command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
     restart: always
     environment:
@@ -17,7 +18,7 @@ services:
   db:
     image: postgres:13
     ports:
-      - 127.0.0.1:6423:5432
+      - 6423:5432
     restart: always
     volumes:
       - db:/var/lib/postgres/data
@@ -33,18 +34,29 @@ services:
 
   hasura:
     image: hasura/graphql-engine:v1.3.3
-    ports:
-      - 127.0.0.1:8080:8080
+    expose:
+      - 8080
     depends_on:
-      - db
+      - powa-repository
     restart: always
     environment:
       - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432/dipdup
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
-      - HASURA_GRAPHQL_DEV_MODE=true
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
       - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
 
-volumes:
-  db:
+  caddy:
+    image: caddy:2.4.0-alpine
+    depends_on:
+      - "hasura"
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./hicdex-graphiql:/srv
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - /opt/caddy_data:/data
+      - /opt/caddy_config:/config
+
