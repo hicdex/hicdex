@@ -4,5 +4,9 @@ an indexer for hic et nunc objkts based on [dipdup](https://dipdup.net/) by [Bak
 
 ## running hicdex
 
+- `git submodule init`
 - `docker-compose build hicdex`
-- 
+- `docker-compose up -d hasura`
+- `docker-compose up hicdex`
+
+login on http://localhost:8081/console
