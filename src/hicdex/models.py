@@ -37,8 +37,8 @@ class Tag(Model):
 
 
 class TokenTag(Model):
-    token = fields.ForeignKeyField("models.Token", "tokens_tag", null=False)
-    tag = fields.ForeignKeyField("models.Tag", "tags_token", null=False)
+    token = fields.ForeignKeyField("models.Token", "token_tags", null=False)
+    tag = fields.ForeignKeyField("models.Tag", "tag_tokens", null=False)
 
     class Meta:
         table = 'token_tag'

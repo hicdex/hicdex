@@ -5,6 +5,7 @@ an indexer for hic et nunc objkts based on [dipdup](https://dipdup.net/) by [Bak
 ## running hicdex
 
 - `git submodule init`
+- `git pull --recurse-submodules`
 - `docker-compose build hicdex`
 - `docker-compose up -d hasura`
 - `docker-compose up hicdex`
