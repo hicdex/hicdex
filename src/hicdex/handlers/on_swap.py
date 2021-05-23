@@ -1,0 +1,22 @@
+import hicdex.models as models
+from dipdup.models import OperationHandlerContext, TransactionContext
+from hicdex.types.hen_minter.parameter.swap import SwapParameter
+from hicdex.types.hen_minter.storage import HenMinterStorage
+
+
+async def on_swap(
+    ctx: OperationHandlerContext,
+    swap: TransactionContext[SwapParameter, HenMinterStorage],
+) -> None:
+    holder, _ = await models.Holder.get_or_create(address=swap.data.sender_address)
+    swap_model = models.Swap(
+        id=int(swap.storage.swap_id) - 1,  # type: ignore
+        creator=holder,
+        price=swap.parameter.xtz_per_objkt,
+        amount=swap.parameter.objkt_amount,
+        amount_left=swap.parameter.objkt_amount,
+        status=models.SwapStatus.ACTIVE,
+        level=swap.data.level,
+        timestamp=swap.data.timestamp,
+    )
+    await swap_model.save()

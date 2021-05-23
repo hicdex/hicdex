@@ -1,52 +1,13 @@
 version: "3.8"
 
 services:
-  hic_et_nunc:
+  hicdex:
     build: .
     depends_on:
       - db
     volumes:
-      - ./src/demo_hic_et_nunc/dipdup.yml:/home/dipdup/dipdup.yml
-      - ./src/demo_hic_et_nunc/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
-    command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
-    restart: always
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
-
-  quipuswap:
-    build: .
-    depends_on:
-      - db
-    volumes:
-      - ./src/demo_quipuswap/dipdup.yml:/home/dipdup/dipdup.yml
-      - ./src/demo_quipuswap/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
-    command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
-    restart: always
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
-
-  tzcolors:
-    build: .
-    depends_on:
-      - db
-    volumes:
-      - ./src/demo_tzcolors/dipdup.yml:/home/dipdup/dipdup.yml
-      - ./src/demo_tzcolors/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
-    command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
-    restart: always
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
-
-  tezos_domains:
-    build: .
-    depends_on:
-      - db
-    volumes:
-      - ./src/demo_tezos_domains/dipdup.yml:/home/dipdup/dipdup.yml
-      - ./src/demo_tezos_domains/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
+      - ./src/hicdex/dipdup.yml:/home/dipdup/dipdup.yml
+      - ./src/hicdex/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
     command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
     restart: always
     environment:
@@ -60,7 +21,7 @@ services:
     restart: always
     volumes:
       - db:/var/lib/postgres/data
-    environment: 
+    environment:
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -84,6 +45,6 @@ services:
       - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
       - HASURA_GRAPHQL_ADMIN_SECRET=${ADMIN_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
-  
+
 volumes:
   db:

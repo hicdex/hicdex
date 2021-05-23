@@ -1,15 +1,12 @@
 import json
 from os.path import dirname, join
-from unittest import IsolatedAsyncioTestCase, skip
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import ANY, AsyncMock, MagicMock, call, patch
 
 from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ignore
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise import Tortoise
 
-from demo_hic_et_nunc.types.hen_minter.parameter.collect import CollectParameter
-from demo_registrydao.types.registry.parameter.propose import ProposeParameter
-from demo_registrydao.types.registry.storage import Proposals, RegistryStorage
 from dipdup.config import (
     ContractConfig,
     OperationHandlerConfig,
@@ -20,6 +17,7 @@ from dipdup.config import (
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import IndexType, OperationData, OperationHandlerContext, State, TransactionContext
 from dipdup.utils import tortoise_wrapper
+from hicdex.types.hen_minter.parameter.collect import CollectParameter
 
 
 class TzktDatasourceTest(IsolatedAsyncioTestCase):
@@ -166,31 +164,3 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertIsInstance(callback_mock.await_args[0][1], TransactionContext)
             self.assertIsInstance(callback_mock.await_args[0][1].parameter, CollectParameter)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)
-
-    @skip('FIXME')
-    async def test_on_operation_match_with_storage(self):
-        with open(join(dirname(__file__), 'operations-storage.json')) as file:
-            operations_message = json.load(file)
-        self.index_config.handlers[0].pattern[0].parameter_type_cls = ProposeParameter
-
-        for op in operations_message['data']:
-            op['type'] = 'transaction'
-        operations = [TzktDatasource.convert_operation(op) for op in operations_message['data']]
-        matched_operation = operations[0]
-
-        async with tortoise_wrapper('sqlite://:memory:'):
-            await Tortoise.generate_schemas()
-
-            callback_mock = AsyncMock()
-
-            self.index_config.handlers[0].callback_fn = callback_mock
-            self.index_config.handlers[0].pattern[0].storage_type_cls = RegistryStorage
-
-            await self.datasource.on_operation_match(self.index_config, self.index_config.handlers[0], [matched_operation], operations)
-
-            self.assertIsInstance(callback_mock.await_args[0][1].storage, RegistryStorage)
-            self.assertIsInstance(callback_mock.await_args[0][1].storage.ledger, list)
-            self.assertIsInstance(
-                callback_mock.await_args[0][1].storage.proposals['e710c1a066bbbf73692168e783607996785260cec4d60930579827298493b8b9'],
-                Proposals,
-            )

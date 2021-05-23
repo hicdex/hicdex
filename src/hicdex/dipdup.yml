@@ -3,7 +3,7 @@ package: hicdex
 
 database:
   kind: sqlite
-  path: db.sqlite3
+  path: hicdex.sqlite3
 
 contracts:
   HEN_objkts:

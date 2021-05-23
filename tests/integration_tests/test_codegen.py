@@ -31,12 +31,7 @@ def import_submodules(package, recursive=True):
 class CodegenTest(IsolatedAsyncioTestCase):
     async def test_codegen(self):
         for name in [
-            'hic_et_nunc.yml',
-            'quipuswap.yml',
-            'tzcolors.yml',
-            'tezos_domains_big_map.yml',
-            'registrydao.yml',
-            'registrydao_dynamic.yml',
+            'hicdex.yml',
         ]:
             with self.subTest(name):
                 config_path = join(dirname(__file__), name)
