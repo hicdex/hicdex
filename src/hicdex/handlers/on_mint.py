@@ -38,6 +38,19 @@ async def on_mint(
     # await seller_holding.save()
 
     await add_tags(token, metadata)
+    await fix_metadata()
+
+
+async def fix_metadata():
+    tokens = await models.Token.filter(artifact_uri='')
+    for token in tokens:
+        metadata = await get_metadata(str(token.id))
+        token.title = clean(get_title(metadata))
+        token.description = clean(get_description(metadata))
+        token.artifact_uri = get_artifact_uri(metadata)
+        token.thumbnail_uri = get_thumbnail_uri(metadata)
+        token.mime = get_mime(metadata)
+        await token.save()
 
 
 async def add_tags(token, metadata):
