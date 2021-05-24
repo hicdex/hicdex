@@ -42,7 +42,7 @@ async def on_mint(
 
 
 async def fix_metadata():
-    tokens = await models.Token.filter(artifact_uri='')
+    tokens = await models.Token.filter(artifact_uri='').all()
     for token in tokens:
         metadata = await get_metadata(str(token.id))
         token.title = clean(get_title(metadata))
