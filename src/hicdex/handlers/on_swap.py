@@ -1,3 +1,4 @@
+from hicdex.metadata_utils import fix_other_metadata, fix_token_metadata
 import hicdex.models as models
 from hicdex.types.hen_minter.parameter.swap import SwapParameter
 from hicdex.types.hen_minter.storage import HenMinterStorage
@@ -22,3 +23,7 @@ async def on_swap(
         timestamp=swap.data.timestamp,
     )
     await swap_model.save()
+
+    if not token.artifact_uri and not token.title:
+        await fix_token_metadata(token)
+        await fix_other_metadata()
