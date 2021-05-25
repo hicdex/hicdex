@@ -18,7 +18,7 @@ async def fix_token_metadata(token):
 
 
 async def fix_other_metadata():
-    tokens = await models.Token.filter(title='', artifact_uri='').all().limit(3)
+    tokens = await models.Token.filter(title='', artifact_uri='').all().order_by('-id').limit(25)
     for token in tokens:
         await fix_token_metadata(token)
 
@@ -36,15 +36,22 @@ async def get_or_create_tag(tag):
 
 
 async def get_metadata(token_id: str):
+    failed_attempt = 0
     try:
         with open(f'{METADATA_PATH}/{token_id}.json') as json_file:
-            return json.load(json_file)
+            metadata = json.load(json_file)
+            failed_attempt = metadata.get('__failed_attempt')
+            if failed_attempt and failed_attempt > 3:
+                return {}
+            if not failed_attempt:
+                return metadata
     except FileNotFoundError:
-        data = await fetch_metadata(token_id)
-        return data
+        pass
+    data = await fetch_metadata(token_id, failed_attempt)
+    return data
 
 
-async def fetch_metadata(token_id):
+async def fetch_metadata(token_id, failed_attempt=0):
     data = await http_request(
         'get',
         url=f'https://api.better-call.dev/v1/tokens/mainnet/metadata?contract:KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9&token_id={token_id}',
@@ -58,6 +65,9 @@ async def fetch_metadata(token_id):
             with open(f'{METADATA_PATH}/{token_id}.json', 'w') as write_file:
                 json.dump(data[0], write_file)
             return data[0]
+        else:
+            with open(f'{METADATA_PATH}/{token_id}.json', 'w') as write_file:
+                json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
     except FileNotFoundError:
         pass
     return {}
