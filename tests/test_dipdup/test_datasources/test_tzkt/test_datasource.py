@@ -7,7 +7,6 @@ from aiosignalrcore.hub.base_hub_connection import BaseHubConnection  # type: ig
 from aiosignalrcore.transport.websockets.connection import ConnectionState  # type: ignore
 from tortoise import Tortoise
 
-from hicdex.types.hen_minter.parameter.collect import CollectParameter
 from dipdup.config import (
     ContractConfig,
     OperationHandlerConfig,
@@ -18,6 +17,7 @@ from dipdup.config import (
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.models import IndexType, OperationData, OperationHandlerContext, State, TransactionContext
 from dipdup.utils import tortoise_wrapper
+from hicdex.types.hen_minter.parameter.collect import CollectParameter
 
 
 class TzktDatasourceTest(IsolatedAsyncioTestCase):

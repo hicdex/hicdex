@@ -44,13 +44,13 @@ class TokenTag(Model):
         table = 'token_tag'
 
 
-# class TokenHolder(Model):
-#     holder = fields.ForeignKeyField("models.Holder", "holders_token", null=False)
-#     token = fields.ForeignKeyField("models.Token", "token_holders", null=False)
-#     quantity = fields.BigIntField(default=0)
+class TokenHolder(Model):
+    holder = fields.ForeignKeyField("models.Holder", "holders_token", null=False)
+    token = fields.ForeignKeyField("models.Token", "token_holders", null=False)
+    quantity = fields.BigIntField(default=0)
 
-#     class Meta:
-#         table = 'token_holder'
+    class Meta:
+        table = 'token_holder'
 
 
 class Swap(Model):

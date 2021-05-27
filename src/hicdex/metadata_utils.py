@@ -1,7 +1,7 @@
 import json
+
 import hicdex.models as models
 from dipdup.utils import http_request
-
 
 METADATA_PATH = '/home/dipdup/metadata/tokens'
 

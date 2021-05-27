@@ -24,6 +24,7 @@ indexes:
     datasource: tzkt_mainnet
     contracts:
       - HEN_minter
+      - HEN_objkts
     handlers:
       - callback: on_mint
         pattern:
@@ -48,8 +49,8 @@ indexes:
           - type: transaction
             destination: HEN_minter
             entrypoint: collect
-      # - callback: on_transfer
-      #   pattern:
-      #     - type: transaction
-      #       destination: HEN_objkts
-      #       entrypoint: transfer
+      - callback: on_transfer
+        pattern:
+          - type: transaction
+            destination: HEN_objkts
+            entrypoint: transfer

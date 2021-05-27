@@ -1,9 +1,9 @@
 import hicdex.models as models
+from dipdup.models import OperationHandlerContext, TransactionContext
 from hicdex.types.hen_minter.parameter.mint_objkt import MintOBJKTParameter
 from hicdex.types.hen_minter.storage import HenMinterStorage
 from hicdex.types.hen_objkts.parameter.mint import MintParameter
 from hicdex.types.hen_objkts.storage import HenObjktsStorage
-from dipdup.models import OperationHandlerContext, TransactionContext
 
 
 async def on_mint(
@@ -12,6 +12,8 @@ async def on_mint(
     mint: TransactionContext[MintParameter, HenObjktsStorage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=mint.parameter.address)
+    if await models.Token.exists(id=mint.parameter.token_id):
+        return
 
     token = models.Token(
         id=mint.parameter.token_id,
@@ -28,5 +30,5 @@ async def on_mint(
     )
     await token.save()
 
-    # seller_holding, _ = await models.TokenHolder.get_or_create(token=token, holder=holder, quantity=int(mint.parameter.amount))
-    # await seller_holding.save()
+    seller_holding, _ = await models.TokenHolder.get_or_create(token=token, holder=holder, quantity=int(mint.parameter.amount))
+    await seller_holding.save()

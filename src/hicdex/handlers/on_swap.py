@@ -1,8 +1,8 @@
-from hicdex.metadata_utils import fix_other_metadata, fix_token_metadata
 import hicdex.models as models
+from dipdup.models import OperationHandlerContext, TransactionContext
+from hicdex.metadata_utils import fix_other_metadata, fix_token_metadata
 from hicdex.types.hen_minter.parameter.swap import SwapParameter
 from hicdex.types.hen_minter.storage import HenMinterStorage
-from dipdup.models import OperationHandlerContext, TransactionContext
 
 
 async def on_swap(
