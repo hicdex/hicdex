@@ -58,7 +58,6 @@ services:
       - "443:443"
     volumes:
       - ./hicdex-graphiql:/srv/api.hicdex.com
-      - ./hicdex-hen-graphql-samples:/srv/hicdex.com
       - ./Caddyfile:/etc/caddy/Caddyfile
       - /opt/caddy_data:/data
       - /opt/caddy_config:/config
