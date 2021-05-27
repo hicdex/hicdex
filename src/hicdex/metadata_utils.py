@@ -38,7 +38,7 @@ async def get_or_create_tag(tag):
 async def get_metadata(token_id: str):
     failed_attempt = 0
     try:
-        with open(f'{METADATA_PATH}/{token_id}.json') as json_file:
+        with open(file_path(token_id)) as json_file:
             metadata = json.load(json_file)
             failed_attempt = metadata.get('__failed_attempt')
             if failed_attempt and failed_attempt > 3:
@@ -62,11 +62,11 @@ async def fetch_metadata(token_id, failed_attempt=0):
     ]
     try:
         if data and not isinstance(data[0], list):
-            with open(f'{METADATA_PATH}/{token_id}.json', 'w') as write_file:
+            with open(file_path(token_id), 'w') as write_file:
                 json.dump(data[0], write_file)
             return data[0]
         else:
-            with open(f'{METADATA_PATH}/{token_id}.json', 'w') as write_file:
+            with open(file_path(token_id), 'w') as write_file:
                 json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
     except FileNotFoundError:
         pass
@@ -102,3 +102,8 @@ def get_thumbnail_uri(metadata):
 
 def clean(string):
     return ''.join(string.split('\x00'))
+
+
+def file_path(token_id: str):
+    subfolder = int(token_id) % 10
+    return f'{METADATA_PATH}/{subfolder}/{token_id}.json'
