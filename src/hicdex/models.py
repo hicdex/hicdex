@@ -18,7 +18,7 @@ class Holder(Model):
 
 class Token(Model):
     id = fields.BigIntField(pk=True)
-    creator = fields.ForeignKeyField('models.Holder', 'tokens')
+    creator = fields.ForeignKeyField('models.Holder', 'tokens', index=True)
     # tags = fields.ManyToManyField('models.Tag', related_name='tokens', through='token_tag')
     title = fields.TextField()
     description = fields.TextField()
@@ -37,16 +37,16 @@ class Tag(Model):
 
 
 class TokenTag(Model):
-    token = fields.ForeignKeyField("models.Token", "token_tags", null=False)
-    tag = fields.ForeignKeyField("models.Tag", "tag_tokens", null=False)
+    token = fields.ForeignKeyField("models.Token", "token_tags", null=False, index=True)
+    tag = fields.ForeignKeyField("models.Tag", "tag_tokens", null=False, index=True)
 
     class Meta:
         table = 'token_tag'
 
 
 class TokenHolder(Model):
-    holder = fields.ForeignKeyField("models.Holder", "holders_token", null=False)
-    token = fields.ForeignKeyField("models.Token", "token_holders", null=False)
+    holder = fields.ForeignKeyField("models.Holder", "holders_token", null=False, index=True)
+    token = fields.ForeignKeyField("models.Token", "token_holders", null=False, index=True)
     quantity = fields.BigIntField(default=0)
 
     class Meta:
@@ -55,8 +55,8 @@ class TokenHolder(Model):
 
 class Swap(Model):
     id = fields.BigIntField(pk=True)
-    creator = fields.ForeignKeyField('models.Holder', 'swaps')
-    token = fields.ForeignKeyField('models.Token', 'swaps')
+    creator = fields.ForeignKeyField('models.Holder', 'swaps', index=True)
+    token = fields.ForeignKeyField('models.Token', 'swaps', index=True)
     price = fields.BigIntField()
     amount = fields.BigIntField()
     amount_left = fields.BigIntField()
@@ -67,10 +67,10 @@ class Swap(Model):
 
 class Trade(Model):
     id = fields.BigIntField(pk=True)
-    token = fields.ForeignKeyField('models.Token', 'trades')
-    swap = fields.ForeignKeyField('models.Swap', 'trades')
-    seller = fields.ForeignKeyField('models.Holder', 'sales')
-    buyer = fields.ForeignKeyField('models.Holder', 'purchases')
+    token = fields.ForeignKeyField('models.Token', 'trades', index=True)
+    swap = fields.ForeignKeyField('models.Swap', 'trades', index=True)
+    seller = fields.ForeignKeyField('models.Holder', 'sales', index=True)
+    buyer = fields.ForeignKeyField('models.Holder', 'purchases', index=True)
     amount = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
