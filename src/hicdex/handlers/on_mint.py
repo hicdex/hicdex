@@ -21,6 +21,7 @@ async def on_mint(
         title='',
         description='',
         artifact_uri='',
+        display_uri='',
         thumbnail_uri='',
         mime='',
         creator=holder,

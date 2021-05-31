@@ -8,7 +8,7 @@ services:
     volumes:
       - ./src/hicdex/dipdup.yml:/home/dipdup/dipdup.yml
       - ./src/hicdex/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
-      - ./hicdex-metadata:/home/dipdup/metadata
+      - /foo/hicdex-metadata:/home/dipdup/metadata
     command: ["-c", "dipdup.yml", "-c", "dipdup-docker.yml", "run"]
     restart: always
     environment:
@@ -21,7 +21,7 @@ services:
       - 6423:5432
     restart: always
     volumes:
-      - db:/var/lib/postgres/data
+      - /foo/pg:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
@@ -34,8 +34,8 @@ services:
 
   hasura:
     image: hasura/graphql-engine:v1.3.3
-    ports:
-      - 8081:8080
+    # ports:
+    #   - 8081:8080
     expose:
       - 8080
     depends_on:
@@ -57,7 +57,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./hicdex-graphiql:/srv/api.hicdex.com
+      - /foo/hicdex-graphiql:/srv/api.hicdex.com
       - ./Caddyfile:/etc/caddy/Caddyfile
       - /opt/caddy_data:/data
       - /opt/caddy_config:/config

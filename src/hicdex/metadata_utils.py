@@ -11,16 +11,22 @@ async def fix_token_metadata(token):
     token.title = get_title(metadata)
     token.description = get_description(metadata)
     token.artifact_uri = get_artifact_uri(metadata)
+    token.display_uri = get_display_uri(metadata)
     token.thumbnail_uri = get_thumbnail_uri(metadata)
     token.mime = get_mime(metadata)
     await add_tags(token, metadata)
     await token.save()
+    return metadata == {}
 
 
 async def fix_other_metadata():
-    tokens = await models.Token.filter(title='', artifact_uri='').all().order_by('-id').limit(25)
+    tokens = await models.Token.filter(title='', artifact_uri='').all().order_by('id').limit(30)
     for token in tokens:
-        await fix_token_metadata(token)
+        fixed = await fix_token_metadata(token)
+        if fixed:
+            print(f'fixed metadata for {token.id}')
+        else:
+            print(f'failed to fix metadata for {token.id}')
 
 
 async def add_tags(token, metadata):
@@ -41,7 +47,7 @@ async def get_metadata(token_id: str):
         with open(file_path(token_id)) as json_file:
             metadata = json.load(json_file)
             failed_attempt = metadata.get('__failed_attempt')
-            if failed_attempt and failed_attempt > 3:
+            if failed_attempt and failed_attempt > 10:
                 return {}
             if not failed_attempt:
                 return metadata
@@ -94,6 +100,10 @@ def get_description(metadata):
 
 def get_artifact_uri(metadata):
     return metadata.get('artifact_uri', '')
+
+
+def get_display_uri(metadata):
+    return metadata.get('display_uri', '')
 
 
 def get_thumbnail_uri(metadata):

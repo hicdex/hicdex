@@ -20,3 +20,7 @@ async def on_transfer(
             receiver_holding, _ = await models.TokenHolder.get_or_create(token=token, holder=receiver)
             receiver_holding.quantity += int(tx.amount)  # type: ignore
             await receiver_holding.save()
+
+            if tx.to_ == 'tz1burnburnburnburnburnburnburjAYjjX':
+                token.supply -= int(tx.amount)
+                await token.save()

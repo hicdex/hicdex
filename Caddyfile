@@ -7,6 +7,11 @@ api.hicdex.com {
 	redir /graphiql /graphiql/
 	redir / /graphiql/
 
+	handle_path /*.json {
+		root * /srv/api.hicdex.com
+		file_server
+	}
+
 	reverse_proxy * hasura:8080 {
 		header_up Host {host}
 		header_up X-Real-IP {remote_host}

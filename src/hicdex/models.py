@@ -19,10 +19,10 @@ class Holder(Model):
 class Token(Model):
     id = fields.BigIntField(pk=True)
     creator = fields.ForeignKeyField('models.Holder', 'tokens', index=True)
-    # tags = fields.ManyToManyField('models.Tag', related_name='tokens', through='token_tag')
     title = fields.TextField()
     description = fields.TextField()
     artifact_uri = fields.TextField()
+    display_uri = fields.TextField()
     thumbnail_uri = fields.TextField()
     mime = fields.TextField()
     royalties = fields.BigIntField()
