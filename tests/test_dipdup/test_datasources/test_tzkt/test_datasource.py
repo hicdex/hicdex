@@ -14,7 +14,7 @@ from dipdup.config import (
     OperationIndexConfig,
     OperationType,
 )
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.datasource import TzktDatasource, dedup_operations
 from dipdup.models import IndexType, OperationData, OperationHandlerContext, State, TransactionContext
 from dipdup.utils import tortoise_wrapper
 from hicdex.types.hen_minter.parameter.collect import CollectParameter
@@ -165,3 +165,20 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertIsInstance(callback_mock.await_args[0][1], TransactionContext)
             self.assertIsInstance(callback_mock.await_args[0][1].parameter, CollectParameter)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)
+
+    async def test_dedup_operations(self) -> None:
+        operations = [
+            {'id': 5},
+            {'id': 3},
+            {'id': 3},
+            {'id': 1},
+        ]
+        operations = dedup_operations(operations)
+        self.assertEqual(
+            [
+                {'id': 1},
+                {'id': 3},
+                {'id': 5},
+            ],
+            operations,
+        )

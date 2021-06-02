@@ -13,6 +13,7 @@ from dipdup.config import (
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
 )
+from dipdup.exceptions import ConfigurationError
 from dipdup.models import BigMapData, OperationData
 
 OperationGroup = namedtuple('OperationGroup', ('hash', 'counter'))
@@ -24,15 +25,18 @@ class OperationCache:
         super().__init__()
         self._logger = logging.getLogger(__name__)
         self._level: Optional[int] = None
-        self._indexes: Dict[str, OperationIndexConfig] = {}
+        self._indexes: List[OperationIndexConfig] = []
+        self._addresses: List[str] = []
         self._operations: Dict[OperationGroup, List[OperationData]] = {}
 
     async def add_index(self, index_config: OperationIndexConfig) -> None:
-        self._logger.debug('Adding index %s to cache', index_config)
         for contract in index_config.contract_configs:
-            if contract.address in self._indexes:
-                raise RuntimeError(f'Address `{contract.address}` used in multiple indexes')
-            self._indexes[contract.address] = index_config
+            if contract.address in self._addresses:
+                raise ConfigurationError(f'Address `{contract.address}` used in multiple indexes')
+            self._addresses.append(contract.address)
+
+        self._logger.debug('Adding index %s to cache', index_config)
+        self._indexes.append(index_config)
 
     async def add(self, operation: OperationData):
         self._logger.debug('Adding operation %s to cache (%s, %s)', operation.id, operation.hash, operation.counter)
@@ -91,12 +95,14 @@ class OperationCache:
             self._logger.debug('Matching %s', key)
             matched = False
 
-            for index_config in self._indexes.values():
+            for index_config in self._indexes:
                 for handler_config in index_config.handlers:
                     operation_idx = 0
                     pattern_idx = 0
                     matched_operations: List[Optional[OperationData]] = []
 
+                    # TODO: Ensure complex cases work, for ex. required argument after optional one
+                    # TODO: Add None to matched_operations where applicable
                     while operation_idx < len(operations):
                         pattern_config = handler_config.pattern[pattern_idx]
                         matched = self.match_operation(pattern_config, operations[operation_idx])

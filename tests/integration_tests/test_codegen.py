@@ -1,6 +1,7 @@
 import importlib
 import pkgutil
 import sys
+from contextlib import suppress
 from os.path import dirname, join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
@@ -47,7 +48,9 @@ class CodegenTest(IsolatedAsyncioTestCase):
 
                     import_submodules(config.package)
                 except Exception as exc:
-                    rmtree('tmp_test_dipdup')
+                    with suppress(FileNotFoundError):
+                        rmtree('tmp_test_dipdup')
                     raise exc
                 else:
-                    rmtree('tmp_test_dipdup')
+                    with suppress(FileNotFoundError):
+                        rmtree('tmp_test_dipdup')
