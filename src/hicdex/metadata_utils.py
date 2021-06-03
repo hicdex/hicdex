@@ -16,11 +16,11 @@ async def fix_token_metadata(token):
     token.mime = get_mime(metadata)
     await add_tags(token, metadata)
     await token.save()
-    return metadata == {}
+    return metadata != {}
 
 
 async def fix_other_metadata():
-    tokens = await models.Token.filter(title='', artifact_uri='').all().order_by('id').limit(30)
+    tokens = await models.Token.filter(artifact_uri='').all().order_by('id').limit(30)
     for token in tokens:
         fixed = await fix_token_metadata(token)
         if fixed:
