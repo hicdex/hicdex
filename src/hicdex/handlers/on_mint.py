@@ -12,7 +12,11 @@ async def on_mint(
     mint: TransactionContext[MintParameter, HenObjktsStorage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=mint.parameter.address)
-    creator, _ = await models.Holder.get_or_create(address=mint.data.sender_address)
+
+    creator = holder
+    if mint.parameter.address != mint.data.sender_address:
+        creator, _ = await models.Holder.get_or_create(address=mint.data.sender_address)
+
     if await models.Token.exists(id=mint.parameter.token_id):
         return
 
