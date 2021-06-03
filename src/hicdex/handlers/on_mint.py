@@ -12,6 +12,7 @@ async def on_mint(
     mint: TransactionContext[MintParameter, HenObjktsStorage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=mint.parameter.address)
+    creator, _ = await models.Holder.get_or_create(address=mint.data.sender_address)
     if await models.Token.exists(id=mint.parameter.token_id):
         return
 
@@ -24,7 +25,7 @@ async def on_mint(
         display_uri='',
         thumbnail_uri='',
         mime='',
-        creator=holder,
+        creator=creator,
         supply=mint.parameter.amount,
         level=mint.data.level,
         timestamp=mint.data.timestamp,
