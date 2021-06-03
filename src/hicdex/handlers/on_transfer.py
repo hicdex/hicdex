@@ -1,12 +1,12 @@
 import hicdex.models as models
 from dipdup.models import OperationHandlerContext, TransactionContext
-from hicdex.types.fa2_token.storage import Fa2TokenStorage
+from hicdex.types.hen_objkts.storage import HenObjktsStorage
 from hicdex.types.hen_objkts.parameter.transfer import TransferParameter
 
 
 async def on_transfer(
     ctx: OperationHandlerContext,
-    transfer: TransactionContext[TransferParameter, Fa2TokenStorage],
+    transfer: TransactionContext[TransferParameter, HenObjktsStorage],
 ) -> None:
     for t in transfer.parameter.__root__:
         sender, _ = await models.Holder.get_or_create(address=t.from_)
