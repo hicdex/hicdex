@@ -14,8 +14,8 @@ async def on_mint(
     holder, _ = await models.Holder.get_or_create(address=mint.parameter.address)
 
     creator = holder
-    if mint.parameter.address != mint.data.sender_address:
-        creator, _ = await models.Holder.get_or_create(address=mint.data.sender_address)
+    if mint.parameter.address != mint_objkt.data.sender_address:
+        creator, _ = await models.Holder.get_or_create(address=mint_objkt.data.sender_address)
 
     if await models.Token.exists(id=mint.parameter.token_id):
         return
