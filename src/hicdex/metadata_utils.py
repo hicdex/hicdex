@@ -7,7 +7,7 @@ METADATA_PATH = '/home/dipdup/metadata/tokens'
 
 
 async def fix_token_metadata(token):
-    metadata = await get_metadata(str(token.id))
+    metadata = await get_metadata(token)
     token.title = get_title(metadata)
     token.description = get_description(metadata)
     token.artifact_uri = get_artifact_uri(metadata)
@@ -41,10 +41,10 @@ async def get_or_create_tag(tag):
     return tag
 
 
-async def get_metadata(token_id: str):
+async def get_metadata(token):
     failed_attempt = 0
     try:
-        with open(file_path(token_id)) as json_file:
+        with open(file_path(token.id)) as json_file:
             metadata = json.load(json_file)
             failed_attempt = metadata.get('__failed_attempt')
             if failed_attempt and failed_attempt > 10:
@@ -53,14 +53,22 @@ async def get_metadata(token_id: str):
                 return metadata
     except FileNotFoundError:
         pass
-    data = await fetch_metadata(token_id, failed_attempt)
+
+    data = await fetch_metadata_cf_ipfs(token, failed_attempt)
+    if data != {}:
+        print(f'metadata for {token.id} from IPFS')
+    else:
+        data = await fetch_metadata_bcd(token, failed_attempt)
+        if data != {}:
+            print(f'metadata for {token.id} from BCD')
+
     return data
 
 
-async def fetch_metadata(token_id, failed_attempt=0):
+async def fetch_metadata_bcd(token, failed_attempt=0):
     data = await http_request(
         'get',
-        url=f'https://api.better-call.dev/v1/tokens/mainnet/metadata?contract:KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9&token_id={token_id}',
+        url=f'https://api.better-call.dev/v1/tokens/mainnet/metadata?contract:KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9&token_id={token.id}',
     )
 
     data = [
@@ -68,12 +76,30 @@ async def fetch_metadata(token_id, failed_attempt=0):
     ]
     try:
         if data and not isinstance(data[0], list):
-            with open(file_path(token_id), 'w') as write_file:
+            with open(file_path(token.id), 'w') as write_file:
                 json.dump(data[0], write_file)
             return data[0]
-        else:
-            with open(file_path(token_id), 'w') as write_file:
-                json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
+        with open(file_path(token.id), 'w') as write_file:
+            json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
+    except FileNotFoundError:
+        pass
+    return {}
+
+
+async def fetch_metadata_cf_ipfs(token, failed_attempt=0):
+    addr = token.metadata.replace('ipfs://', '')
+    data = await http_request(
+        'get',
+        url=f'https://cloudflare-ipfs.com/ipfs/{addr}',
+    )
+
+    try:
+        if data and not isinstance(data, list):
+            with open(file_path(token.id), 'w') as write_file:
+                json.dump(data, write_file)
+            return data
+        with open(file_path(token.id), 'w') as write_file:
+            json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
     except FileNotFoundError:
         pass
     return {}
@@ -99,15 +125,15 @@ def get_description(metadata):
 
 
 def get_artifact_uri(metadata):
-    return metadata.get('artifact_uri', '')
+    return metadata.get('artifact_uri', '') or metadata.get('artifactUri', '')
 
 
 def get_display_uri(metadata):
-    return metadata.get('display_uri', '')
+    return metadata.get('display_uri', '') or metadata.get('displayUri', '')
 
 
 def get_thumbnail_uri(metadata):
-    return metadata.get('thumbnail_uri', '')
+    return metadata.get('thumbnail_uri', '') or metadata.get('thumbnailUri', '')
 
 
 def clean(string):

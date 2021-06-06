@@ -1,7 +1,7 @@
 import hicdex.models as models
 from dipdup.models import OperationHandlerContext, TransactionContext
-from hicdex.types.hen_objkts.storage import HenObjktsStorage
 from hicdex.types.hen_objkts.parameter.transfer import TransferParameter
+from hicdex.types.hen_objkts.storage import HenObjktsStorage
 
 
 async def on_transfer(
@@ -22,5 +22,5 @@ async def on_transfer(
             await receiver_holding.save()
 
             if tx.to_ == 'tz1burnburnburnburnburnburnburjAYjjX':
-                token.supply -= int(tx.amount)
+                token.supply -= int(tx.amount)  # type: ignore
                 await token.save()

@@ -24,6 +24,7 @@ class Token(Model):
     artifact_uri = fields.TextField()
     display_uri = fields.TextField()
     thumbnail_uri = fields.TextField()
+    metadata = fields.TextField()
     mime = fields.TextField()
     royalties = fields.BigIntField()
     supply = fields.BigIntField()
