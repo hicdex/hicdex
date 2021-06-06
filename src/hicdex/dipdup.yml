@@ -12,6 +12,9 @@ contracts:
   HEN_minter:
     address: ${HEN_MINTER:-KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9}
     typename: hen_minter
+  HEN_subjkts:
+    address: KT1My1wDZHDGweCrJnQJi3wcFaS67iksirvj
+    typename: hen_subjkt
 
 datasources:
   tzkt_mainnet:
@@ -25,6 +28,7 @@ indexes:
     contracts:
       - HEN_minter
       - HEN_objkts
+      - HEN_subjkts
     handlers:
       - callback: on_mint
         pattern:
@@ -54,3 +58,8 @@ indexes:
           - type: transaction
             destination: HEN_objkts
             entrypoint: transfer
+      - callback: on_registry
+        pattern:
+          - type: transaction
+            destination: HEN_subjkts
+            entrypoint: registry

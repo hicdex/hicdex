@@ -14,6 +14,9 @@ class SwapStatus(IntEnum):
 
 class Holder(Model):
     address = fields.CharField(36, pk=True)
+    name = fields.TextField(default='')
+    metadata_file = fields.TextField(default='')
+    metadata = fields.JSONField(default={})
 
 
 class Token(Model):
