@@ -8,7 +8,7 @@ METADATA_PATH = '/home/dipdup/metadata/tokens'
 
 async def fix_token_metadata(token):
     metadata = await get_metadata(token)
-    token.title = get_title(metadata)
+    token.title = get_name(metadata)
     token.description = get_description(metadata)
     token.artifact_uri = get_artifact_uri(metadata)
     token.display_uri = get_display_uri(metadata)
@@ -65,6 +65,30 @@ async def get_metadata(token):
     return data
 
 
+def normalize_metadata(token, metadata):
+    n = {
+        '__version': 1,
+        'token_id': token.id,
+        'symbol': metadata.get('symbol', 'OBJKT'),
+        'name': get_name(metadata),
+        'description': get_description(metadata),
+        'artifact_uri': get_artifact_uri(metadata),
+        'display_uri': get_display_uri(metadata),
+        'thumbnail_uri': get_thumbnail_uri(metadata),
+        'formats': get_formats(metadata),
+        'creators': get_creators(metadata),
+        'tags': metadata.get('tags', []),
+        'extra': {},
+    }
+
+    return n
+
+
+def write_metadata_file(token, metadata):
+    with open(file_path(token.id), 'w') as write_file:
+        json.dump(normalize_metadata(token, metadata), write_file)
+
+
 async def fetch_metadata_bcd(token, failed_attempt=0):
     data = await http_request(
         'get',
@@ -76,8 +100,7 @@ async def fetch_metadata_bcd(token, failed_attempt=0):
     ]
     try:
         if data and not isinstance(data[0], list):
-            with open(file_path(token.id), 'w') as write_file:
-                json.dump(data[0], write_file)
+            write_metadata_file(token, data[0])
             return data[0]
         with open(file_path(token.id), 'w') as write_file:
             json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
@@ -95,8 +118,7 @@ async def fetch_metadata_cf_ipfs(token, failed_attempt=0):
 
     try:
         if data and not isinstance(data, list):
-            with open(file_path(token.id), 'w') as write_file:
-                json.dump(data, write_file)
+            write_metadata_file(token, data)
             return data
         with open(file_path(token.id), 'w') as write_file:
             json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
@@ -112,11 +134,14 @@ def get_mime(metadata):
 
 
 def get_tags(metadata):
-    unique_tags = list(set(metadata.get('tags', [])))
-    return [clean(tag) for tag in unique_tags if len(tag) < 255]
+    tags = metadata.get('tags', [])
+    cleaned = [clean(tag) for tag in tags]
+    lowercased = [tag.lower() for tag in cleaned]
+    uniqued = list(set(lowercased))
+    return [tag for tag in uniqued if len(tag) < 255]
 
 
-def get_title(metadata):
+def get_name(metadata):
     return clean(metadata.get('name', ''))
 
 
@@ -134,6 +159,18 @@ def get_display_uri(metadata):
 
 def get_thumbnail_uri(metadata):
     return metadata.get('thumbnail_uri', '') or metadata.get('thumbnailUri', '')
+
+
+def get_formats(metadata):
+    return clean(metadata.get('formats', []))
+
+
+def get_creators(metadata):
+    return clean(metadata.get('creators', []))
+
+
+def get_creator(metadata):
+    return clean(metadata.get('creator', []))
 
 
 def clean(string):
