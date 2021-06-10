@@ -10,6 +10,17 @@ api.hicdex.com {
 	handle_path /*.json {
 		root * /srv/api.hicdex.com
 		file_server
+		header Access-Control-Allow-Origin *
+		header Access-Control-Allow-Headers *
+		header Access-Control-Allow-Methods *
+	}
+
+	handle_path /cache/*.json {
+		root * /srv/api.hicdex.com
+		file_server
+		header Access-Control-Allow-Origin *
+		header Access-Control-Allow-Headers *
+		header Access-Control-Allow-Methods *
 	}
 
 	reverse_proxy * hasura:8080 {
