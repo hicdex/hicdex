@@ -1,10 +1,8 @@
 from pprint import pprint
 from typing import Optional
 
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
-
 import hicdex.models as models
-
+from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
 from hicdex.types.hdao_ledger.parameter.h_dao_batch import HDAOBatchParameter
 from hicdex.types.hdao_ledger.storage import HdaoLedgerStorage
 
