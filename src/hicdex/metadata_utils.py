@@ -111,18 +111,18 @@ async def fetch_metadata_bcd(token, failed_attempt=0):
 
 async def fetch_metadata_cf_ipfs(token, failed_attempt=0):
     addr = token.metadata.replace('ipfs://', '')
-    data = await http_request(
-        'get',
-        url=f'https://cloudflare-ipfs.com/ipfs/{addr}',
-    )
 
     try:
+        data = await http_request(
+            'get',
+            url=f'https://cloudflare-ipfs.com/ipfs/{addr}',
+        )
         if data and not isinstance(data, list):
             write_metadata_file(token, data)
             return data
         with open(file_path(token.id), 'w') as write_file:
             json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
-    except FileNotFoundError:
+    except Exception:
         pass
     return {}
 
