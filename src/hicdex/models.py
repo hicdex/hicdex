@@ -17,6 +17,7 @@ class Holder(Model):
     name = fields.TextField(default='')
     metadata_file = fields.TextField(default='')
     metadata = fields.JSONField(default={})
+    hdao_balance = fields.BigIntField(default=0)
 
 
 class Token(Model):
@@ -31,6 +32,8 @@ class Token(Model):
     mime = fields.TextField()
     royalties = fields.BigIntField()
     supply = fields.BigIntField()
+    hdao_balance = fields.BigIntField(default=0)
+
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
@@ -64,8 +67,9 @@ class Swap(Model):
     price = fields.BigIntField()
     amount = fields.BigIntField()
     amount_left = fields.BigIntField()
-    level = fields.BigIntField()
     status = fields.IntEnumField(SwapStatus)
+
+    level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
 
@@ -76,5 +80,6 @@ class Trade(Model):
     seller = fields.ForeignKeyField('models.Holder', 'sales', index=True)
     buyer = fields.ForeignKeyField('models.Holder', 'purchases', index=True)
     amount = fields.BigIntField()
+
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
