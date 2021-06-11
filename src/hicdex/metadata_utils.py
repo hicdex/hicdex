@@ -14,6 +14,7 @@ async def fix_token_metadata(token):
     token.display_uri = get_display_uri(metadata)
     token.thumbnail_uri = get_thumbnail_uri(metadata)
     token.mime = get_mime(metadata)
+    token.extra = metadata.get('extra', {})
     await add_tags(token, metadata)
     await token.save()
     return metadata != {}

@@ -29,6 +29,7 @@ class Token(Model):
     display_uri = fields.TextField()
     thumbnail_uri = fields.TextField()
     metadata = fields.TextField()
+    extra = fields.JSONField(default={})
     mime = fields.TextField()
     royalties = fields.BigIntField()
     supply = fields.BigIntField()
