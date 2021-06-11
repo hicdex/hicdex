@@ -51,7 +51,7 @@ async def get_metadata(token):
                 return {}
             if not failed_attempt:
                 return metadata
-    except FileNotFoundError:
+    except Exception:
         pass
 
     data = await fetch_metadata_cf_ipfs(token, failed_attempt)
@@ -162,15 +162,15 @@ def get_thumbnail_uri(metadata):
 
 
 def get_formats(metadata):
-    return clean(metadata.get('formats', []))
+    return metadata.get('formats', [])
 
 
 def get_creators(metadata):
-    return clean(metadata.get('creators', []))
+    return metadata.get('creators', [])
 
 
 def get_creator(metadata):
-    return clean(metadata.get('creator', []))
+    return metadata.get('creator', [])
 
 
 def clean(string):
