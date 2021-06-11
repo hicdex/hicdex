@@ -179,7 +179,7 @@ def clean(string):
 
 
 def file_path(token_id: str):
-    token_id = int(token_id)
-    lvl2 = token_id % 10
-    lvl1 = int((token_id % 100 - lvl2) / 10)
+    token_id_int = int(token_id)
+    lvl2 = token_id_int % 10
+    lvl1 = int((token_id_int % 100 - lvl2) / 10)
     return f'{METADATA_PATH}/{lvl1}/{lvl2}/{token_id}.json'
