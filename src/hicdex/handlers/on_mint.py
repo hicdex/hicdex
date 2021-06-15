@@ -5,6 +5,7 @@ from hicdex.types.hen_minter.parameter.mint_objkt import MintOBJKTParameter
 from hicdex.types.hen_minter.storage import HenMinterStorage
 from hicdex.types.hen_objkts.parameter.mint import MintParameter
 from hicdex.types.hen_objkts.storage import HenObjktsStorage
+from hicdex.utils import fromhex
 
 
 async def on_mint(
@@ -23,7 +24,7 @@ async def on_mint(
 
     metadata = ''
     if mint_objkt.parameter.metadata:
-        metadata = bytes.fromhex(mint_objkt.parameter.metadata).decode()
+        metadata = fromhex(mint_objkt.parameter.metadata)
 
     token = models.Token(
         id=mint.parameter.token_id,

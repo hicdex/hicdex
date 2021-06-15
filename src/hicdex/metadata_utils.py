@@ -2,6 +2,7 @@ import json
 
 import hicdex.models as models
 from dipdup.utils import http_request
+from hicdex.utils import clean_null_bytes
 
 METADATA_PATH = '/home/dipdup/metadata/tokens'
 
@@ -78,6 +79,7 @@ def normalize_metadata(token, metadata):
         'thumbnail_uri': get_thumbnail_uri(metadata),
         'formats': get_formats(metadata),
         'creators': get_creators(metadata),
+        # not cleaned / not lowercased, store as-is
         'tags': metadata.get('tags', []),
         'extra': {},
     }
@@ -136,46 +138,42 @@ def get_mime(metadata):
 
 def get_tags(metadata):
     tags = metadata.get('tags', [])
-    cleaned = [clean(tag) for tag in tags]
+    cleaned = [clean_null_bytes(tag) for tag in tags]
     lowercased = [tag.lower() for tag in cleaned]
     uniqued = list(set(lowercased))
     return [tag for tag in uniqued if len(tag) < 255]
 
 
 def get_name(metadata):
-    return clean(metadata.get('name', ''))
+    return clean_null_bytes(metadata.get('name', ''))
 
 
 def get_description(metadata):
-    return clean(metadata.get('description', ''))
+    return clean_null_bytes(metadata.get('description', ''))
 
 
 def get_artifact_uri(metadata):
-    return metadata.get('artifact_uri', '') or metadata.get('artifactUri', '')
+    return clean_null_bytes(metadata.get('artifact_uri', '') or metadata.get('artifactUri', ''))
 
 
 def get_display_uri(metadata):
-    return metadata.get('display_uri', '') or metadata.get('displayUri', '')
+    return clean_null_bytes(metadata.get('display_uri', '') or metadata.get('displayUri', ''))
 
 
 def get_thumbnail_uri(metadata):
-    return metadata.get('thumbnail_uri', '') or metadata.get('thumbnailUri', '')
+    return clean_null_bytes(metadata.get('thumbnail_uri', '') or metadata.get('thumbnailUri', ''))
 
 
 def get_formats(metadata):
-    return metadata.get('formats', [])
+    return [clean_null_bytes(x) for x in metadata.get('formats', [])]
 
 
 def get_creators(metadata):
-    return metadata.get('creators', [])
+    return [clean_null_bytes(x) for x in metadata.get('creators', [])]
 
 
 def get_creator(metadata):
-    return metadata.get('creator', [])
-
-
-def clean(string):
-    return ''.join(string.split('\x00'))
+    return [clean_null_bytes(x) for x in metadata.get('creator', [])]
 
 
 def file_path(token_id: str):

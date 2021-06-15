@@ -5,6 +5,7 @@ from dipdup.models import OperationData, OperationHandlerContext, OriginationCon
 from dipdup.utils import http_request
 from hicdex.types.hen_subjkt.parameter.registry import RegistryParameter
 from hicdex.types.hen_subjkt.storage import HenSubjktStorage
+from hicdex.utils import fromhex
 
 
 async def on_registry(
@@ -14,18 +15,20 @@ async def on_registry(
     addr = registry.data.sender_address
     holder, _ = await models.Holder.get_or_create(address=addr)
 
-    name = bytes.fromhex(registry.parameter.subjkt).decode()
-    metadata_file = bytes.fromhex(registry.parameter.metadata).decode()
+    name = fromhex(registry.parameter.subjkt)
+    metadata_file = fromhex(registry.parameter.metadata)
     metadata = {}
 
-    try:
-        addr = metadata_file.replace('ipfs://', '')
-        metadata = await http_request(
-            'get',
-            url=f'https://cloudflare-ipfs.com/ipfs/{addr}',
-        )
-    except Exception:
-        pass
+    if metadata_file.startswith('ipfs://'):
+        try:
+            addr = metadata_file.replace('ipfs://', '')
+            metadata = await http_request(
+                'get',
+                url=f'https://cloudflare-ipfs.com/ipfs/{addr}',
+            )
+        except Exception:
+            pass
+
     holder.name = name  # type: ignore
     holder.metadata_file = metadata_file  # type: ignore
     holder.metadata = metadata  # type: ignore
