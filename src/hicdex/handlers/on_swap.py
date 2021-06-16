@@ -1,13 +1,14 @@
 import hicdex.models as models
-from dipdup.models import OperationHandlerContext, TransactionContext
-from hicdex.metadata_utils import fix_other_metadata, fix_token_metadata
 from hicdex.types.hen_minter.parameter.swap import SwapParameter
 from hicdex.types.hen_minter.storage import HenMinterStorage
+from hicdex.metadata_utils import fix_other_metadata, fix_token_metadata
+from dipdup.context import OperationHandlerContext
+from dipdup.models import Transaction
 
 
 async def on_swap(
     ctx: OperationHandlerContext,
-    swap: TransactionContext[SwapParameter, HenMinterStorage],
+    swap: Transaction[SwapParameter, HenMinterStorage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=swap.data.sender_address)
     token = await models.Token.filter(id=int(swap.parameter.objkt_id)).get()
