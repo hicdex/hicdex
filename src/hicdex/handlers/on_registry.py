@@ -1,4 +1,6 @@
 from typing import Optional
+import logging
+import aiohttp
 
 import hicdex.models as models
 from dipdup.utils import http_request
@@ -7,6 +9,8 @@ from hicdex.types.hen_subjkt.storage import HenSubjktStorage
 from hicdex.utils import fromhex
 from dipdup.context import OperationHandlerContext
 from dipdup.models import Transaction
+
+_logger = logging.getLogger(__name__)
 
 
 async def on_registry(
@@ -21,13 +25,17 @@ async def on_registry(
     metadata = {}
 
     if metadata_file.startswith('ipfs://'):
+        _logger.info("Fetching IPFS metadata")
         try:
+            session = aiohttp.ClientSession()
             addr = metadata_file.replace('ipfs://', '')
             metadata = await http_request(
+                session,
                 'get',
                 url=f'https://cloudflare-ipfs.com/ipfs/{addr}',
             )
-        except Exception:
+        except Exception as e:
+            _logger.error(f"Failed to fetch IPFS metadata: {e}")
             pass
 
     holder.name = name  # type: ignore
