@@ -1,7 +1,8 @@
 import hicdex.models as models
-from dipdup.models import OperationHandlerContext, Transaction
 from hicdex.types.hen_objkts.parameter.transfer import TransferParameter
 from hicdex.types.hen_objkts.storage import HenObjktsStorage
+from dipdup.context import OperationHandlerContext
+from dipdup.models import Transaction
 
 
 async def on_transfer(
