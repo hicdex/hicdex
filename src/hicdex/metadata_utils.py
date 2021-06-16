@@ -165,7 +165,7 @@ def get_thumbnail_uri(metadata):
 
 
 def get_formats(metadata):
-    return [clean_null_bytes(x) for x in metadata.get('formats', [])]
+    return metadata.get('formats', [])
 
 
 def get_creators(metadata):
