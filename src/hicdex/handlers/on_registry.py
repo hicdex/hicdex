@@ -1,7 +1,7 @@
 from typing import Optional
 
 import hicdex.models as models
-from dipdup.models import OperationData, OperationHandlerContext, OriginationContext, TransactionContext
+from dipdup.models import OperationHandlerContext, Transaction
 from dipdup.utils import http_request
 from hicdex.types.hen_subjkt.parameter.registry import RegistryParameter
 from hicdex.types.hen_subjkt.storage import HenSubjktStorage
@@ -10,7 +10,7 @@ from hicdex.utils import fromhex
 
 async def on_registry(
     ctx: OperationHandlerContext,
-    registry: TransactionContext[RegistryParameter, HenSubjktStorage],
+    registry: Transaction[RegistryParameter, HenSubjktStorage],
 ) -> None:
     addr = registry.data.sender_address
     holder, _ = await models.Holder.get_or_create(address=addr)
