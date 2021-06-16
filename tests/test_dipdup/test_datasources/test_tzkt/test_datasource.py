@@ -169,19 +169,19 @@ class TzktDatasourceTest(IsolatedAsyncioTestCase):
             self.assertIsInstance(callback_mock.await_args[0][1].parameter, CollectParameter)
             self.assertIsInstance(callback_mock.await_args[0][1].data, OperationData)
 
-    async def test_dedup_operations(self) -> None:
-        operations = [
-            {'id': 5},
-            {'id': 3},
-            {'id': 3},
-            {'id': 1},
-        ]
-        operations = dedup_operations(operations)
-        self.assertEqual(
-            [
-                {'id': 1},
-                {'id': 3},
-                {'id': 5},
-            ],
-            operations,
-        )
+    # async def test_dedup_operations(self) -> None:
+    #     operations = [
+    #         {'id': 5},
+    #         {'id': 3},
+    #         {'id': 3},
+    #         {'id': 1},
+    #     ]
+    #     operations = dedup_operations(operations)
+    #     self.assertEqual(
+    #         [
+    #             {'id': 1},
+    #             {'id': 3},
+    #             {'id': 5},
+    #         ],
+    #         operations,
+    #     )
