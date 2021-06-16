@@ -1,4 +1,5 @@
 import json
+import aiohttp
 
 import hicdex.models as models
 from dipdup.utils import http_request
@@ -93,7 +94,9 @@ def write_metadata_file(token, metadata):
 
 
 async def fetch_metadata_bcd(token, failed_attempt=0):
+    session = aiohttp.ClientSession()
     data = await http_request(
+        session,
         'get',
         url=f'https://api.better-call.dev/v1/tokens/mainnet/metadata?contract:KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9&token_id={token.id}',
     )
