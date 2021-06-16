@@ -2,14 +2,17 @@ from enum import Enum, IntEnum
 
 from tortoise import Model, fields
 
-# on mint token, holder
-# on_swap new, cancel_swap, collect
-
 
 class SwapStatus(IntEnum):
     ACTIVE = 0
     FINISHED = 1
     CANCELED = 2
+
+
+class ShareholderStatus(str, Enum):
+    unspecified = "unspecified"
+    core_participant = "core_participant"
+    benefactor = "benefactor"
 
 
 class Holder(Model):
@@ -18,6 +21,20 @@ class Holder(Model):
     metadata_file = fields.TextField(default='')
     metadata = fields.JSONField(default={})
     hdao_balance = fields.BigIntField(default=0)
+    is_split = fields.BooleanField(default=False)
+
+
+class SplitContract(Model):
+    contract = fields.ForeignKeyField('models.Holder', 'shares', index=True)
+    administrator = fields.CharField(36)
+    total_shares = fields.BigIntField()
+
+
+class Shareholder(Model):
+    split_contract = fields.ForeignKeyField('models.SplitContract', 'shareholder', index=True)
+    holder = fields.ForeignKeyField('models.Holder', 'shareholder', index=True)
+    shares = fields.BigIntField()
+    holder_type = fields.CharEnumField(ShareholderStatus, default=ShareholderStatus.unspecified)
 
 
 class Token(Model):
