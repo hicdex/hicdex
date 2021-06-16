@@ -2,9 +2,10 @@ from pprint import pprint
 from typing import Optional
 
 import hicdex.models as models
-from dipdup.models import OperationHandlerContext, Transaction
 from hicdex.types.hdao_ledger.parameter.h_dao_batch import HDAOBatchParameter
 from hicdex.types.hdao_ledger.storage import HdaoLedgerStorage
+from dipdup.context import OperationHandlerContext
+from dipdup.models import Transaction
 
 
 async def on_hdaol_batch(

@@ -1,11 +1,12 @@
 from typing import Optional
 
 import hicdex.models as models
-from dipdup.models import OperationHandlerContext, Transaction
 from dipdup.utils import http_request
 from hicdex.types.hen_subjkt.parameter.registry import RegistryParameter
 from hicdex.types.hen_subjkt.storage import HenSubjktStorage
 from hicdex.utils import fromhex
+from dipdup.context import OperationHandlerContext
+from dipdup.models import Transaction
 
 
 async def on_registry(
