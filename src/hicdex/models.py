@@ -10,9 +10,9 @@ class SwapStatus(IntEnum):
 
 
 class ShareholderStatus(str, Enum):
-    unspecified = "unspecified"
-    core_participant = "core_participant"
-    benefactor = "benefactor"
+    unspecified = 'unspecified'
+    core_participant = 'core_participant'
+    benefactor = 'benefactor'
 
 
 class Holder(Model):
@@ -56,22 +56,31 @@ class Token(Model):
     timestamp = fields.DatetimeField()
 
 
+class TokenOperator(Model):
+    token = fields.ForeignKeyField('models.Token', 'operators', null=False, index=True)
+    owner = fields.ForeignKeyField('models.Holder', 'owner', index=True)
+    operator = fields.CharField(36)
+
+    class Meta:
+        table = 'token_operator'
+
+
 class Tag(Model):
     id = fields.BigIntField(pk=True)
     tag = fields.CharField(255)
 
 
 class TokenTag(Model):
-    token = fields.ForeignKeyField("models.Token", "token_tags", null=False, index=True)
-    tag = fields.ForeignKeyField("models.Tag", "tag_tokens", null=False, index=True)
+    token = fields.ForeignKeyField('models.Token', 'token_tags', null=False, index=True)
+    tag = fields.ForeignKeyField('models.Tag', 'tag_tokens', null=False, index=True)
 
     class Meta:
         table = 'token_tag'
 
 
 class TokenHolder(Model):
-    holder = fields.ForeignKeyField("models.Holder", "holders_token", null=False, index=True)
-    token = fields.ForeignKeyField("models.Token", "token_holders", null=False, index=True)
+    holder = fields.ForeignKeyField('models.Holder', 'holders_token', null=False, index=True)
+    token = fields.ForeignKeyField('models.Token', 'token_holders', null=False, index=True)
     quantity = fields.BigIntField(default=0)
 
     class Meta:
