@@ -51,6 +51,15 @@ indexes:
     template: split_factory
     similar_to: SPLIT_contract_sample_a
 
+  objkt_operator:
+    kind: big_map
+    datasource: tzkt_mainnet
+    handlers:
+      - callback: on_operator_update
+        pattern:
+          - contract: HEN_objkts
+            path: operators
+
   hen_mainnet:
     kind: operation
     datasource: tzkt_mainnet
