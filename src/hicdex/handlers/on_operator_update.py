@@ -41,5 +41,8 @@ async def on_operator_update(
             token_operator = await models.TokenOperator.create(token=token, owner=owner, operator=operator)
 
         if operation.action == BigMapAction.REMOVE:
-            token_operator = await models.TokenOperator.filter(token=token, owner=owner, operator=operator).get()
-            await token_operator.delete()
+            try:
+                token_operator = await models.TokenOperator.filter(token=token, owner=owner, operator=operator).get()
+                await token_operator.delete()
+            except:
+                print(f'failed to remove {token.id} {owner.address} {operator}')
