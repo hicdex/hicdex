@@ -1,15 +1,12 @@
-from pprint import pprint
-from typing import Optional
-
 import hicdex.models as models
+from dipdup.context import HandlerContext
+from dipdup.models import Transaction
 from hicdex.types.hdao_ledger.parameter.transfer import TransferParameter
 from hicdex.types.hdao_ledger.storage import HdaoLedgerStorage
-from dipdup.context import OperationHandlerContext
-from dipdup.models import Transaction
 
 
 async def on_hdaol_transfer(
-    ctx: OperationHandlerContext,
+    ctx: HandlerContext,
     transfer: Transaction[TransferParameter, HdaoLedgerStorage],
 ) -> None:
     for t in transfer.parameter.__root__:

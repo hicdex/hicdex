@@ -1,8 +1,8 @@
 import hicdex.models as models
-from hicdex.types.hen_minter.parameter.collect import CollectParameter
-from hicdex.types.hen_minter.storage import HenMinterStorage
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
+from hicdex.types.hen_minter.parameter.collect import CollectParameter
+from hicdex.types.hen_minter.storage import HenMinterStorage
 
 
 async def on_collect(

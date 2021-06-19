@@ -1,16 +1,16 @@
 import hicdex.models as models
+from dipdup.context import HandlerContext
+from dipdup.models import Transaction
 from hicdex.metadata_utils import fix_token_metadata
 from hicdex.types.hen_minter.parameter.mint_objkt import MintOBJKTParameter
 from hicdex.types.hen_minter.storage import HenMinterStorage
 from hicdex.types.hen_objkts.parameter.mint import MintParameter
 from hicdex.types.hen_objkts.storage import HenObjktsStorage
 from hicdex.utils import fromhex
-from dipdup.context import OperationHandlerContext
-from dipdup.models import Transaction
 
 
 async def on_mint(
-    ctx: OperationHandlerContext,
+    ctx: HandlerContext,
     mint_objkt: Transaction[MintOBJKTParameter, HenMinterStorage],
     mint: Transaction[MintParameter, HenObjktsStorage],
 ) -> None:

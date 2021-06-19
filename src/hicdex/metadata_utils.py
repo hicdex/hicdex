@@ -1,4 +1,5 @@
 import json
+
 import aiohttp
 
 import hicdex.models as models

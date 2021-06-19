@@ -1,20 +1,20 @@
-from typing import Optional
 import logging
+
 import aiohttp
 
 import hicdex.models as models
+from dipdup.context import HandlerContext
+from dipdup.models import Transaction
 from dipdup.utils import http_request
 from hicdex.types.hen_subjkt.parameter.registry import RegistryParameter
 from hicdex.types.hen_subjkt.storage import HenSubjktStorage
 from hicdex.utils import fromhex
-from dipdup.context import OperationHandlerContext
-from dipdup.models import Transaction
 
 _logger = logging.getLogger(__name__)
 
 
 async def on_registry(
-    ctx: OperationHandlerContext,
+    ctx: HandlerContext,
     registry: Transaction[RegistryParameter, HenSubjktStorage],
 ) -> None:
     addr = registry.data.sender_address
