@@ -6,6 +6,7 @@ services:
     depends_on:
       - db
     volumes:
+      - ./src/hicdex:/home/dipdup/source/src/hicdex
       - ./src/hicdex/dipdup.yml:/home/dipdup/dipdup.yml
       - ./src/hicdex/dipdup-docker.yml:/home/dipdup/dipdup-docker.yml
       - /foo/hicdex-metadata:/home/dipdup/metadata
@@ -14,6 +15,8 @@ services:
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+      - MAILGUN_API_KEY=${MAILGUN_API_KEY:-}
+      - NOTIFIED_EMAILS=${NOTIFIED_EMAILS:-}
 
   db:
     image: postgres:13
@@ -57,7 +60,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /foo/hicdex-graphiql:/srv/api.hicdex.com
+      - ../hicdex-graphiql:/srv/api.hicdex.com
       - ./Caddyfile:/etc/caddy/Caddyfile
       - /opt/caddy_data:/data
       - /opt/caddy_config:/config

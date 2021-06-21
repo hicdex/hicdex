@@ -101,6 +101,7 @@ async def fetch_metadata_bcd(token, failed_attempt=0):
         'get',
         url=f'https://api.better-call.dev/v1/tokens/mainnet/metadata?contract:KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9&token_id={token.id}',
     )
+    await session.close()
 
     data = [
         obj for obj in data if 'symbol' in obj and (obj['symbol'] == 'OBJKT' or obj['contract'] == 'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton')
@@ -118,18 +119,21 @@ async def fetch_metadata_bcd(token, failed_attempt=0):
 
 async def fetch_metadata_cf_ipfs(token, failed_attempt=0):
     addr = token.metadata.replace('ipfs://', '')
-
     try:
+        session = aiohttp.ClientSession()
         data = await http_request(
+            session,
             'get',
             url=f'https://cloudflare-ipfs.com/ipfs/{addr}',
         )
+        await session.close()
         if data and not isinstance(data, list):
             write_metadata_file(token, data)
             return data
         with open(file_path(token.id), 'w') as write_file:
             json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
     except Exception:
+        await session.close()
         pass
     return {}
 

@@ -37,6 +37,8 @@ async def on_registry(
         except Exception as e:
             _logger.error(f"Failed to fetch IPFS metadata: {e}")
             pass
+        finally:
+            await session.close()
 
     holder.name = name  # type: ignore
     holder.metadata_file = metadata_file  # type: ignore
