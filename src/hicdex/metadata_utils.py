@@ -121,11 +121,7 @@ async def fetch_metadata_cf_ipfs(token, failed_attempt=0):
     addr = token.metadata.replace('ipfs://', '')
     try:
         session = aiohttp.ClientSession()
-        data = await http_request(
-            session,
-            'get',
-            url=f'https://cloudflare-ipfs.com/ipfs/{addr}',
-        )
+        data = await http_request(session, 'get', url=f'https://cloudflare-ipfs.com/ipfs/{addr}', timeout=10)
         await session.close()
         if data and not isinstance(data, list):
             write_metadata_file(token, data)
@@ -134,7 +130,6 @@ async def fetch_metadata_cf_ipfs(token, failed_attempt=0):
             json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
     except Exception:
         await session.close()
-        pass
     return {}
 
 

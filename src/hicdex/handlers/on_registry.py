@@ -29,14 +29,9 @@ async def on_registry(
         try:
             session = aiohttp.ClientSession()
             addr = metadata_file.replace('ipfs://', '')
-            metadata = await http_request(
-                session,
-                'get',
-                url=f'https://cloudflare-ipfs.com/ipfs/{addr}',
-            )
+            metadata = await http_request(session, 'get', url=f'https://cloudflare-ipfs.com/ipfs/{addr}', timeout=10)
         except Exception as e:
             _logger.error(f"Failed to fetch IPFS metadata: {e}")
-            pass
         finally:
             await session.close()
 
