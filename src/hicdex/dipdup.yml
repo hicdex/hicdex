@@ -31,34 +31,27 @@ datasources:
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 
-templates:
-  split_factory:
+indexes:
+  split_contract_a:
     kind: operation
     datasource: tzkt_mainnet
     types:
+      - transaction
       - origination
-    contracts:
-      - <contract>
     handlers:
       - callback: on_split_contract_origination_a
         pattern:
           - type: origination
-            originated_contract: <contract>
-
-indexes:
-
-  split_contract_a:
-    template: split_factory
-    similar_to: SPLIT_contract_sample_a
+            similar_to: SPLIT_contract_sample_a
+    stateless: True
 
   objkt_operator:
     kind: big_map
     datasource: tzkt_mainnet
     handlers:
       - callback: on_operator_update
-        pattern:
-          - contract: HEN_objkts
-            path: operators
+        contract: HEN_objkts
+        path: operators
 
   hen_mainnet:
     kind: operation
