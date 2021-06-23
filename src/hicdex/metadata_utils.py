@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import aiohttp
 
@@ -7,6 +8,7 @@ from dipdup.utils import http_request
 from hicdex.utils import clean_null_bytes
 
 METADATA_PATH = '/home/dipdup/metadata/tokens'
+SUBJKT_PATH = '/home/dipdup/metadata/subjkts'
 
 
 async def fix_token_metadata(token):
@@ -43,6 +45,24 @@ async def add_tags(token, metadata):
 async def get_or_create_tag(tag):
     tag, _ = await models.Tag.get_or_create(tag=tag)
     return tag
+
+
+async def get_subjkt_metadata(holder):
+    failed_attempt = 0
+    try:
+        with open(subjkt_path(holder.address)) as json_file:
+            metadata = json.load(json_file)
+            failed_attempt = metadata.get('__failed_attempt')
+            if failed_attempt and failed_attempt > 10:
+                return {}
+            if not failed_attempt:
+                return metadata
+    except Exception:
+        pass
+
+    data = await fetch_subjkt_metadata_cf_ipfs(holder, failed_attempt)
+
+    return data
 
 
 async def get_metadata(token):
@@ -89,6 +109,11 @@ def normalize_metadata(token, metadata):
     return n
 
 
+def write_subjkt_metadata_file(holder, metadata):
+    with open(subjkt_path(holder.address), 'w') as write_file:
+        json.dump(metadata, write_file)
+
+
 def write_metadata_file(token, metadata):
     with open(file_path(token.id), 'w') as write_file:
         json.dump(normalize_metadata(token, metadata), write_file)
@@ -114,6 +139,22 @@ async def fetch_metadata_bcd(token, failed_attempt=0):
             json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
     except FileNotFoundError:
         pass
+    return {}
+
+
+async def fetch_subjkt_metadata_cf_ipfs(holder, failed_attempt=0):
+    addr = holder.metadata_file.replace('ipfs://', '')
+    try:
+        session = aiohttp.ClientSession()
+        data = await http_request(session, 'get', url=f'https://cloudflare-ipfs.com/ipfs/{addr}', timeout=10)
+        await session.close()
+        if data and not isinstance(data, list):
+            write_subjkt_metadata_file(holder, data)
+            return data
+        with open(subjkt_path(holder.address), 'w') as write_file:
+            json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
+    except Exception:
+        await session.close()
     return {}
 
 
@@ -168,7 +209,7 @@ def get_thumbnail_uri(metadata):
 
 
 def get_formats(metadata):
-    return [clean_null_bytes(x) for x in metadata.get('formats', [])]
+    return metadata.get('formats', [])
 
 
 def get_creators(metadata):
@@ -184,3 +225,10 @@ def file_path(token_id: str):
     lvl2 = token_id_int % 10
     lvl1 = int((token_id_int % 100 - lvl2) / 10)
     return f'{METADATA_PATH}/{lvl1}/{lvl2}/{token_id}.json'
+
+
+def subjkt_path(addr: str):
+    lvl = addr[-1]
+    folder = f'{SUBJKT_PATH}/{lvl}'
+    Path(folder).mkdir(parents=True, exist_ok=True)
+    return f'{folder}/{addr}.json'

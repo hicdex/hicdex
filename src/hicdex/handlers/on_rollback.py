@@ -17,14 +17,14 @@ def send(levels_diff):
         data={
             "from": "Hicdex API <mailgun@mail.hicdex.com>",
             "to": [to_emails],
-            "subject": "Rollback hicdex",
+            "subject": "Rollback hicdex 3",
             "text": f"Chain reorg: {levels_diff} blocks, please reindex!",
         },
     )
 
 
 async def on_rollback(ctx: RollbackHandlerContext) -> None:
-    ctx.logger.warning('Datasource `%s` rolled back from level %s to level %s, reindexing', ctx.datasource, ctx.from_level, ctx.to_level)
+    ctx.logger.warning('Datasource rolled back from level %s to level %s, reindexing', ctx.from_level, ctx.to_level)
     # await ctx.reindex()
     levels_diff = ctx.from_level - ctx.to_level
     send(levels_diff)

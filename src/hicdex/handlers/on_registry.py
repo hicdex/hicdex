@@ -6,6 +6,7 @@ import hicdex.models as models
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
 from dipdup.utils import http_request
+from hicdex.metadata_utils import get_subjkt_metadata
 from hicdex.types.hen_subjkt.parameter.registry import RegistryParameter
 from hicdex.types.hen_subjkt.storage import HenSubjktStorage
 from hicdex.utils import fromhex
@@ -24,18 +25,15 @@ async def on_registry(
     metadata_file = fromhex(registry.parameter.metadata)
     metadata = {}
 
-    if metadata_file.startswith('ipfs://'):
-        _logger.info("Fetching IPFS metadata")
-        try:
-            session = aiohttp.ClientSession()
-            addr = metadata_file.replace('ipfs://', '')
-            metadata = await http_request(session, 'get', url=f'https://cloudflare-ipfs.com/ipfs/{addr}', timeout=10)
-        except Exception as e:
-            _logger.error(f"Failed to fetch IPFS metadata: {e}")
-        finally:
-            await session.close()
-
     holder.name = name  # type: ignore
     holder.metadata_file = metadata_file  # type: ignore
     holder.metadata = metadata  # type: ignore
+
+    try:
+        if metadata_file.startswith('ipfs://'):
+            _logger.info("Fetching IPFS metadata")
+            holder.metadata = await get_subjkt_metadata(holder)
+    except:
+        pass
+
     await holder.save()
