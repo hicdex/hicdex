@@ -1,18 +1,22 @@
+import logging
 from typing import List
 
 import hicdex.models as models
-from dipdup.models import BigMapAction, BigMapContext, BigMapHandlerContext
+from dipdup.context import HandlerContext
+from dipdup.models import BigMapAction, BigMapDiff
 from hicdex.types.hen_objkts.big_map.operators_key import OperatorsKey
 from hicdex.types.hen_objkts.big_map.operators_value import OperatorsValue
 
+_logger = logging.getLogger(__name__)
+
 
 async def on_operator_update(
-    ctx: BigMapHandlerContext,
-    operators: List[BigMapContext[OperatorsKey, OperatorsValue]],
+    ctx: HandlerContext,
+    operators: List[BigMapDiff[OperatorsKey, OperatorsValue]],
 ) -> None:
     operations = []
     for operation in operators:
-        if not isinstance(operation, BigMapContext):
+        if not isinstance(operation, HandlerContext):
             continue
 
         if operation.action == BigMapAction.ADD:
@@ -45,4 +49,4 @@ async def on_operator_update(
                 token_operator = await models.TokenOperator.filter(token=token, owner=owner, operator=operator).get()
                 await token_operator.delete()
             except:
-                print(f'failed to remove {token.id} {owner.address} {operator}')
+                _logger.info(f'failed to remove {token.id} {owner.address} {operator}')

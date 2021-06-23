@@ -1,11 +1,9 @@
 import logging
-
-import aiohttp
+from typing import Dict
 
 import hicdex.models as models
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
-from dipdup.utils import http_request
 from hicdex.metadata_utils import get_subjkt_metadata
 from hicdex.types.hen_subjkt.parameter.registry import RegistryParameter
 from hicdex.types.hen_subjkt.storage import HenSubjktStorage
@@ -23,7 +21,7 @@ async def on_registry(
 
     name = fromhex(registry.parameter.subjkt)
     metadata_file = fromhex(registry.parameter.metadata)
-    metadata = {}
+    metadata: Dict[str, str] = {}
 
     holder.name = name  # type: ignore
     holder.metadata_file = metadata_file  # type: ignore

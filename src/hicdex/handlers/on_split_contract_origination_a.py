@@ -1,17 +1,18 @@
 import hicdex.models as models
-from dipdup.models import OperationHandlerContext, OriginationContext
+from dipdup.context import HandlerContext
+from dipdup.models import Origination
 from hicdex.types.split_contract_a.storage import SplitContractAStorage
 
 
 async def on_split_contract_origination_a(
-    ctx: OperationHandlerContext,
-    split_originated_a_origination: OriginationContext[SplitContractAStorage],
+    ctx: HandlerContext,
+    split_contract_a_origination: Origination[SplitContractAStorage],
 ) -> None:
-    if split_originated_a_origination.data.sender_address == 'KT1UmgaFQgHrqEb4kPK4GoeHyu7YBfGu3rd4':
-        contract_address = split_originated_a_origination.data.originated_contract_address
-        shares = split_originated_a_origination.storage.shares
-        administrator = split_originated_a_origination.storage.administrator
-        total_shares = split_originated_a_origination.storage.totalShares
+    if split_contract_a_origination.data.sender_address == 'KT1UmgaFQgHrqEb4kPK4GoeHyu7YBfGu3rd4':
+        contract_address = split_contract_a_origination.data.originated_contract_address
+        shares = split_contract_a_origination.storage.shares
+        administrator = split_contract_a_origination.storage.administrator
+        total_shares = split_contract_a_origination.storage.totalShares
 
         holder, _ = await models.Holder.get_or_create(address=contract_address)
         holder.is_split = True  # type: ignore

@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 
 import aiohttp
@@ -9,6 +10,8 @@ from hicdex.utils import clean_null_bytes
 
 METADATA_PATH = '/home/dipdup/metadata/tokens'
 SUBJKT_PATH = '/home/dipdup/metadata/subjkts'
+
+_logger = logging.getLogger(__name__)
 
 
 async def fix_token_metadata(token):
@@ -30,9 +33,9 @@ async def fix_other_metadata():
     for token in tokens:
         fixed = await fix_token_metadata(token)
         if fixed:
-            print(f'fixed metadata for {token.id}')
+            _logger.info(f'fixed metadata for {token.id}')
         else:
-            print(f'failed to fix metadata for {token.id}')
+            _logger.info(f'failed to fix metadata for {token.id}')
 
 
 async def add_tags(token, metadata):
@@ -80,11 +83,11 @@ async def get_metadata(token):
 
     data = await fetch_metadata_cf_ipfs(token, failed_attempt)
     if data != {}:
-        print(f'metadata for {token.id} from IPFS')
+        _logger.info(f'metadata for {token.id} from IPFS')
     else:
         data = await fetch_metadata_bcd(token, failed_attempt)
         if data != {}:
-            print(f'metadata for {token.id} from BCD')
+            _logger.info(f'metadata for {token.id} from BCD')
 
     return data
 
