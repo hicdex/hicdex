@@ -1,12 +1,13 @@
 import hicdex.models as models
-from dipdup.models import OperationHandlerContext, TransactionContext
+from dipdup.context import HandlerContext
+from dipdup.models import Transaction
 from hicdex.types.hen_minter.parameter.collect import CollectParameter
 from hicdex.types.hen_minter.storage import HenMinterStorage
 
 
 async def on_collect(
-    ctx: OperationHandlerContext,
-    collect: TransactionContext[CollectParameter, HenMinterStorage],
+    ctx: HandlerContext,
+    collect: Transaction[CollectParameter, HenMinterStorage],
 ) -> None:
     swap = await models.Swap.filter(id=collect.parameter.swap_id).get()
     seller = await swap.creator

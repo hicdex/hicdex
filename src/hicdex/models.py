@@ -2,14 +2,17 @@ from enum import Enum, IntEnum
 
 from tortoise import Model, fields
 
-# on mint token, holder
-# on_swap new, cancel_swap, collect
-
 
 class SwapStatus(IntEnum):
     ACTIVE = 0
     FINISHED = 1
     CANCELED = 2
+
+
+class ShareholderStatus(str, Enum):
+    unspecified = 'unspecified'
+    core_participant = 'core_participant'
+    benefactor = 'benefactor'
 
 
 class Holder(Model):
@@ -18,6 +21,20 @@ class Holder(Model):
     metadata_file = fields.TextField(default='')
     metadata = fields.JSONField(default={})
     hdao_balance = fields.BigIntField(default=0)
+    is_split = fields.BooleanField(default=False)
+
+
+class SplitContract(Model):
+    contract = fields.ForeignKeyField('models.Holder', 'shares', index=True)
+    administrator = fields.CharField(36)
+    total_shares = fields.BigIntField()
+
+
+class Shareholder(Model):
+    split_contract = fields.ForeignKeyField('models.SplitContract', 'shareholder', index=True)
+    holder = fields.ForeignKeyField('models.Holder', 'shareholder', index=True)
+    shares = fields.BigIntField()
+    holder_type = fields.CharEnumField(ShareholderStatus, default=ShareholderStatus.unspecified)
 
 
 class Token(Model):
@@ -39,22 +56,31 @@ class Token(Model):
     timestamp = fields.DatetimeField()
 
 
+class TokenOperator(Model):
+    token = fields.ForeignKeyField('models.Token', 'operators', null=False, index=True)
+    owner = fields.ForeignKeyField('models.Holder', 'owner', index=True)
+    operator = fields.CharField(36)
+
+    class Meta:
+        table = 'token_operator'
+
+
 class Tag(Model):
     id = fields.BigIntField(pk=True)
     tag = fields.CharField(255)
 
 
 class TokenTag(Model):
-    token = fields.ForeignKeyField("models.Token", "token_tags", null=False, index=True)
-    tag = fields.ForeignKeyField("models.Tag", "tag_tokens", null=False, index=True)
+    token = fields.ForeignKeyField('models.Token', 'token_tags', null=False, index=True)
+    tag = fields.ForeignKeyField('models.Tag', 'tag_tokens', null=False, index=True)
 
     class Meta:
         table = 'token_tag'
 
 
 class TokenHolder(Model):
-    holder = fields.ForeignKeyField("models.Holder", "holders_token", null=False, index=True)
-    token = fields.ForeignKeyField("models.Token", "token_holders", null=False, index=True)
+    holder = fields.ForeignKeyField('models.Holder', 'holders_token', null=False, index=True)
+    token = fields.ForeignKeyField('models.Token', 'token_holders', null=False, index=True)
     quantity = fields.BigIntField(default=0)
 
     class Meta:

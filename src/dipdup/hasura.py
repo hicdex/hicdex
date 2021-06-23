@@ -9,7 +9,7 @@ import aiohttp
 from aiohttp import ClientConnectorError, ClientOSError
 from tortoise import Model, fields
 
-from dipdup.config import DipDupConfig, PostgresDatabaseConfig, camel_to_snake
+from dipdup.config import DipDupConfig, PostgresDatabaseConfig, pascal_to_snake
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import http_request
 
@@ -17,7 +17,8 @@ _logger = logging.getLogger(__name__)
 
 
 def _is_model_class(obj) -> bool:
-    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model
+    """Is subclass of tortoise.Model, but not the base class"""
+    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
 
 
 def _format_array_relationship(
@@ -89,6 +90,10 @@ def _iter_models(*modules) -> Iterator[Tuple[str, Type[Model]]]:
 
 
 async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
+    """Generate metadata based on dapp models.
+
+    Includes tables and their relations (but not entities created during execution of snippets from `sql` package directory)
+    """
     _logger.info('Generating Hasura metadata')
     metadata_tables = {}
     model_tables = {}
@@ -97,7 +102,7 @@ async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
     models = importlib.import_module(f'{config.package}.models')
 
     for app, model in _iter_models(models, int_models):
-        table_name = model._meta.db_table or camel_to_snake(model.__name__)  # pylint: disable=protected-access
+        table_name = model._meta.db_table or pascal_to_snake(model.__name__)  # pylint: disable=protected-access
         model_tables[f'{app}.{model.__name__}'] = table_name
 
         table = _format_table(
@@ -137,60 +142,64 @@ async def generate_hasura_metadata(config: DipDupConfig) -> Dict[str, Any]:
 
 
 async def configure_hasura(config: DipDupConfig):
+    """Generate Hasura metadata and apply to instance with credentials from `hasura` config section."""
 
     if config.hasura is None:
         raise ConfigurationError('`hasura` config section missing')
 
     _logger.info('Configuring Hasura')
-
     url = config.hasura.url.rstrip("/")
     hasura_metadata = await generate_hasura_metadata(config)
 
-    _logger.info('Waiting for Hasura instance to be healthy')
-    for _ in range(60):
-        with suppress(ClientConnectorError, ClientOSError):
-            async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession() as session:
+        _logger.info('Waiting for Hasura instance to be healthy')
+        for _ in range(60):
+            with suppress(ClientConnectorError, ClientOSError):
                 await session.get(f'{url}/healthz')
                 break
-        await asyncio.sleep(1)
-    else:
-        _logger.error('Hasura instance not responding for 60 seconds')
-        return
+            await asyncio.sleep(1)
+        else:
+            _logger.error('Hasura instance not responding for 60 seconds')
+            return
 
-    headers = {}
-    if config.hasura.admin_secret:
-        headers['X-Hasura-Admin-Secret'] = config.hasura.admin_secret
+        headers = {}
+        if config.hasura.admin_secret:
+            headers['X-Hasura-Admin-Secret'] = config.hasura.admin_secret
 
-    _logger.info('Fetching existing metadata')
-    existing_hasura_metadata = await http_request(
-        'post',
-        url=f'{url}/v1/query',
-        data=json.dumps(
-            {
-                "type": "export_metadata",
-                "args": hasura_metadata,
-            },
-        ),
-        headers=headers,
-    )
+        _logger.info('Fetching existing metadata')
+        existing_hasura_metadata = await http_request(
+            session,
+            'post',
+            url=f'{url}/v1/query',
+            data=json.dumps(
+                {
+                    "type": "export_metadata",
+                    "args": hasura_metadata,
+                },
+            ),
+            headers=headers,
+        )
 
-    _logger.info('Merging existing metadata')
-    hasura_metadata_tables = [table['table'] for table in hasura_metadata['tables']]
-    for table in existing_hasura_metadata['tables']:
-        if table['table'] not in hasura_metadata_tables:
-            hasura_metadata['tables'].append(table)
+        _logger.info('Merging existing metadata')
+        hasura_metadata_tables = [table['table'] for table in hasura_metadata['tables']]
+        for table in existing_hasura_metadata['tables']:
+            if table['table'] not in hasura_metadata_tables:
+                hasura_metadata['tables'].append(table)
 
-    _logger.info('Sending replace metadata request')
-    result = await http_request(
-        'post',
-        url=f'{url}/v1/query',
-        data=json.dumps(
-            {
-                "type": "replace_metadata",
-                "args": hasura_metadata,
-            },
-        ),
-        headers=headers,
-    )
-    if not result.get('message') == 'success':
-        _logger.error('Can\'t configure Hasura instance: %s', result)
+        _logger.info('Sending replace metadata request')
+        result = await http_request(
+            session,
+            'post',
+            url=f'{url}/v1/query',
+            data=json.dumps(
+                {
+                    "type": "replace_metadata",
+                    "args": hasura_metadata,
+                },
+            ),
+            headers=headers,
+        )
+        if not result.get('message') == 'success':
+            _logger.error('Can\'t configure Hasura instance: %s', result)
+        else:
+            _logger.info('Hasura instance has been configured')

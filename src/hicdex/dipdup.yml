@@ -1,4 +1,4 @@
-spec_version: 0.1
+spec_version: 1.0
 package: hicdex
 
 database:
@@ -21,6 +21,9 @@ contracts:
   HDAO_ledger:
     address: KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW
     typename: hdao_ledger
+  SPLIT_contract_sample_a:
+    address: KT1JHdHohUVtwdrg2kvxveR4aH1fBJpi757p
+    typename: split_contract_a
 
 datasources:
   tzkt_mainnet:
@@ -28,9 +31,13 @@ datasources:
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 indexes:
+
   hen_mainnet:
     kind: operation
     datasource: tzkt_mainnet
+    types:
+      - transaction
+      - origination
     contracts:
       - HEN_minter
       - HEN_objkts
@@ -94,3 +101,24 @@ indexes:
           - type: transaction
             destination: HDAO_curation
             entrypoint: curate
+
+  split_contract_a:
+    kind: operation
+    datasource: tzkt_mainnet
+    types:
+      - transaction
+      - origination
+    handlers:
+      - callback: on_split_contract_origination_a
+        pattern:
+          - type: origination
+            similar_to: SPLIT_contract_sample_a
+    stateless: True
+
+  objkt_operator:
+    kind: big_map
+    datasource: tzkt_mainnet
+    handlers:
+      - callback: on_operator_update
+        contract: HEN_objkts
+        path: operators
