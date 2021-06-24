@@ -20,6 +20,7 @@ services:
 
   db:
     image: postgres:13
+    shm_size: 6g
     ports:
       - 6423:5432
     restart: always
