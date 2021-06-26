@@ -24,13 +24,86 @@ contracts:
   SPLIT_contract_sample_a:
     address: KT1JHdHohUVtwdrg2kvxveR4aH1fBJpi757p
     typename: split_contract_a
+  OBJKTBID_english:
+    address: ${OB_ENGLISH:-KT1UR6tGUUipGYfcZevUmM2hXuoJDJNEt8uZ}
+    typename: objktbid_english
+  OBJKTBID_dutch:
+    address: ${OB_DUTCH:-KT1GJhw9ea1dGxPuUmQYmhAQoiZv4MghJwMZ}
+    typename: objktbid_dutch
+  OBJKTBID_bid:
+    address: ${OB_BID:-KT1UDbtXhMJe981vYmeYarDA2nzNXpX2xwS6}
+    typename: objktbid_bid
 
 datasources:
   tzkt_mainnet:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
+  tzkt_florencenet:
+    kind: tzkt
+    url: ${TZKT_TEST_URL:-https://api.florencenet.tzkt.io/}
 
-indexes:
+indexes:  
+  
+  objktbid_testnet:
+    kind: operation
+    datasource: tzkt_florencenet
+    contracts:
+      - OBJKTBID_english
+      - OBJKTBID_dutch
+      - OBJKTBID_bid
+    handlers:
+      - callback: on_create_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english
+            entrypoint: create_auction
+      - callback: on_cancel_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english
+            entrypoint: cancel_auction
+      - callback: on_conclude_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english
+            entrypoint: conclude_auction
+      - callback: on_bid_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english
+            entrypoint: bid
+      
+      - callback: on_create_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch
+            entrypoint: create_auction
+      - callback: on_cancel_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch
+            entrypoint: cancel_auction
+      - callback: on_buy_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch
+            entrypoint: buy
+      
+      - callback: on_create_bid
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_bid
+            entrypoint: bid
+      - callback: on_retract_bid
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_bid
+            entrypoint: retract_bid
+      - callback: on_swap_bid
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_bid
+            entrypoint: swap
 
   hen_mainnet:
     kind: operation
@@ -122,3 +195,7 @@ indexes:
       - callback: on_operator_update
         contract: HEN_objkts
         path: operators
+  
+
+      
+  
