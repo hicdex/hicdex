@@ -110,3 +110,24 @@ class Trade(Model):
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
+
+
+class AuctionStatus(IntEnum):
+    ACTIVE = 0
+    CANCELED = 1
+    CONCLUDED = 2
+
+class EnglishAuction(Model):
+    id = fields.BigIntField(pk=True)
+    fa2 = fields.CharField(36)
+    status = fields.IntEnumField(AuctionStatus)
+    objkt_id = fields.BigIntField(index=True)
+    creator = fields.CharField(36)
+    highest_bidder = fields.CharField(36)
+    highest_bid = fields.BigIntField()
+    start_time = fields.DatetimeField()
+    end_time = fields.DatetimeField()
+    extension_time = fields.BigIntField
+    price_increment = fields.BigIntField()
+    reserve = fields.BigIntField()
