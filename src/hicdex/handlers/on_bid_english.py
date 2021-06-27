@@ -13,4 +13,7 @@ async def on_bid_english(
     ctx: HandlerContext,
     bid: Transaction[BidParameter, ObjktbidEnglishStorage],
 ) -> None:
-    ...
+    auction_model = await models.EnglishAuction.filter(id=int(bid.parameter.__root__)).get()
+    auction_model.highest_bid = bid.data.amount
+    auction_model.highest_bidder = bid.data.sender_address
+    await auction_model.save()

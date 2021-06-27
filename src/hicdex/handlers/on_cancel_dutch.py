@@ -13,4 +13,6 @@ async def on_cancel_dutch(
     ctx: HandlerContext,
     cancel_auction: Transaction[CancelAuctionParameter, ObjktbidDutchStorage],
 ) -> None:
-    ...
+    auction_model = await models.DutchAuction.filter(id=int(cancel_auction.parameter.__root__)).get()
+    auction_model.status = models.AuctionStatus.CANCELED
+    await auction_model.save()

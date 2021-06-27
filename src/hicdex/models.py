@@ -111,7 +111,9 @@ class Trade(Model):
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
-
+####################
+# OBJKT.BID Models #
+####################
 
 class AuctionStatus(IntEnum):
     ACTIVE = 0
@@ -131,3 +133,34 @@ class EnglishAuction(Model):
     extension_time = fields.BigIntField
     price_increment = fields.BigIntField()
     reserve = fields.BigIntField()
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+class DutchAuction(Model):
+    id = fields.BigIntField(pk=True)
+    fa2 = fields.CharField(36)
+    status = fields.IntEnumField(AuctionStatus)
+    objkt_id = fields.BigIntField(index=True)
+    creator = fields.CharField(36)
+    start_time = fields.DatetimeField()
+    end_time = fields.DatetimeField()
+    start_price = fields.BigIntField()
+    end_price = fields.BigIntField()
+    buyer = fields.CharField(36, null=True)
+    buy_price=fields.BigIntField(null=True)
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+class Bid(Model):
+    id = fields.BigIntField(pk=True)
+    creator = fields.CharField(36)
+    objkt_id = fields.BigIntField(index=True)
+    fa2 = fields.CharField(36)
+    price = fields.BigIntField()
+    status = fields.IntEnumField(SwapStatus)
+    seller = fields.CharField(36, null=True)
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()

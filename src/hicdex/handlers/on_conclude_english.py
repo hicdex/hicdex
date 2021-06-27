@@ -13,6 +13,6 @@ async def on_conclude_english(
     ctx: HandlerContext,
     conclude_auction: Transaction[ConcludeAuctionParameter, ObjktbidEnglishStorage],
 ) -> None:
-    auction_model = await models.EnglishAuction.filter(id=int(conclude_auction.parameter)).get()
-    auction_model.status=2
+    auction_model = await models.EnglishAuction.filter(id=int(conclude_auction.parameter.__root__)).get()
+    auction_model.status=models.AuctionStatus.CONCLUDED
     await auction_model.save()
