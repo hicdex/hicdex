@@ -3,13 +3,14 @@
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, List
 
 from pydantic import BaseModel
 
 
 class SplitContractAStorage(BaseModel):
     administrator: str
+    coreParticipants: List[str]
     hicetnuncMinterAddress: str
-    shares: Dict[str, str]
+    shares: Dict[str, int]
     totalShares: str

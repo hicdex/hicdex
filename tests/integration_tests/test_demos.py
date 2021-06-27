@@ -5,8 +5,6 @@ from os.path import dirname, join
 from shutil import rmtree
 from unittest import IsolatedAsyncioTestCase
 
-from tortoise.transactions import in_transaction
-
 import hicdex.models
 from dipdup.utils import tortoise_wrapper
 
