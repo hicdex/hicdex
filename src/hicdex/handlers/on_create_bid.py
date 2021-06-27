@@ -13,11 +13,14 @@ async def on_create_bid(
     ctx: HandlerContext,
     bid: Transaction[BidParameter, ObjktbidBidStorage],
 ) -> None:
+    fa2, _ = await models.FA2Token.get_or_create(address=bid.parameter.fa2)
+    creator, _ = await models.Holder.get_or_create(address=bid.data.sender_address)
+
     bid_model = models.Bid(
         id=int(bid.storage.swap_id) - 1,  # type: ignore
-        creator=bid.data.sender_address,
+        creator=creator,
         objkt_id=bid.parameter.objkt_id,
-        fa2=bid.parameter.fa2,
+        fa2=fa2,
         price=bid.data.amount,
         status=models.AuctionStatus.ACTIVE,
         level=bid.data.level,

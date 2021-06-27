@@ -14,6 +14,8 @@ async def on_swap_bid(
     swap: Transaction[SwapParameter, ObjktbidBidStorage],
 ) -> None:
     bid = await models.Bid.filter(id=swap.parameter.__root__).get()
-    bid.seller = swap.data.sender_address
+    seller, _ = await models.Holder.get_or_create(address=swap.data.sender_address)
+
+    bid.seller = seller
     bid.status = models.AuctionStatus.CONCLUDED
     await bid.save()

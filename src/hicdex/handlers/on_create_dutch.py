@@ -13,12 +13,15 @@ async def on_create_dutch(
     ctx: HandlerContext,
     create_auction: Transaction[CreateAuctionParameter, ObjktbidDutchStorage],
 ) -> None:
+    fa2, _ = await models.FA2Token.get_or_create(address=create_auction.parameter.fa2)
+    creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
+
     auction_model = models.DutchAuction(
         id=int(create_auction.storage.auction_id) - 1,  # type: ignore
-        fa2=create_auction.parameter.fa2,
+        fa2=fa2,
         status=models.AuctionStatus.ACTIVE,
         objkt_id=create_auction.parameter.objkt_id,
-        creator=create_auction.data.sender_address,
+        creator=creator,
         start_time=create_auction.parameter.start_time,
         end_time=create_auction.parameter.end_time,
         start_price=create_auction.parameter.start_price,

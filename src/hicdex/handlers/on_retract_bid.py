@@ -14,5 +14,5 @@ async def on_retract_bid(
     retract_bid: Transaction[RetractBidParameter, ObjktbidBidStorage],
 ) -> None:
     bid = await models.Bid.filter(id=int(retract_bid.parameter.__root__)).get()
-    bid.status = models.AuctionStatus.CANCELED
+    bid.status = models.AuctionStatus.CANCELLED
     await bid.save()

@@ -42,69 +42,7 @@ datasources:
     kind: tzkt
     url: ${TZKT_TEST_URL:-https://api.florencenet.tzkt.io/}
 
-indexes:  
-  
-  objktbid_testnet:
-    kind: operation
-    datasource: tzkt_florencenet
-    contracts:
-      - OBJKTBID_english
-      - OBJKTBID_dutch
-      - OBJKTBID_bid
-    handlers:
-      - callback: on_create_english
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_english
-            entrypoint: create_auction
-      - callback: on_cancel_english
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_english
-            entrypoint: cancel_auction
-      - callback: on_conclude_english
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_english
-            entrypoint: conclude_auction
-      - callback: on_bid_english
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_english
-            entrypoint: bid
-      
-      - callback: on_create_dutch
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_dutch
-            entrypoint: create_auction
-      - callback: on_cancel_dutch
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_dutch
-            entrypoint: cancel_auction
-      - callback: on_buy_dutch
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_dutch
-            entrypoint: buy
-      
-      - callback: on_create_bid
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_bid
-            entrypoint: bid
-      - callback: on_retract_bid
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_bid
-            entrypoint: retract_bid
-      - callback: on_swap_bid
-        pattern:
-          - type: transaction
-            destination: OBJKTBID_bid
-            entrypoint: swap
-
+indexes:    
   hen_mainnet:
     kind: operation
     datasource: tzkt_mainnet
@@ -196,6 +134,63 @@ indexes:
         contract: HEN_objkts
         path: operators
   
-
+  objktbid_testnet:
+    kind: operation
+    datasource: tzkt_florencenet
+    contracts:
+      - OBJKTBID_english
+      - OBJKTBID_dutch
+      - OBJKTBID_bid
+    handlers:
+      - callback: on_create_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english
+            entrypoint: create_auction
+      - callback: on_cancel_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english
+            entrypoint: cancel_auction
+      - callback: on_conclude_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english
+            entrypoint: conclude_auction
+      - callback: on_bid_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english
+            entrypoint: bid
       
-  
+      - callback: on_create_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch
+            entrypoint: create_auction
+      - callback: on_cancel_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch
+            entrypoint: cancel_auction
+      - callback: on_buy_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch
+            entrypoint: buy
+      
+      - callback: on_create_bid
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_bid
+            entrypoint: bid
+      - callback: on_retract_bid
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_bid
+            entrypoint: retract_bid
+      - callback: on_swap_bid
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_bid
+            entrypoint: swap

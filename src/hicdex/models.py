@@ -115,17 +115,20 @@ class Trade(Model):
 # OBJKT.BID Models #
 ####################
 
-class AuctionStatus(IntEnum):
-    ACTIVE = 0
-    CANCELED = 1
-    CONCLUDED = 2
+class AuctionStatus(str, Enum):
+    ACTIVE = 'active'
+    CANCELLED = 'cancelled'
+    CONCLUDED = 'concluded'
+
+class FA2Token(Model):
+    address = fields.CharField(36, pk=True)
 
 class EnglishAuction(Model):
     id = fields.BigIntField(pk=True)
-    fa2 = fields.CharField(36)
-    status = fields.IntEnumField(AuctionStatus)
+    fa2 = fields.ForeignKeyField('models.FA2Token', 'english_auctions', index=True)
+    status = fields.CharEnumField(AuctionStatus)
     objkt_id = fields.BigIntField(index=True)
-    creator = fields.CharField(36)
+    creator = fields.ForeignKeyField('models.Holder', 'english_auctions', index=True)
     start_time = fields.DatetimeField()
     end_time = fields.DatetimeField()
     extension_time = fields.BigIntField
@@ -137,24 +140,24 @@ class EnglishAuction(Model):
 
 class EnglishBid(Model):
     id = fields.BigIntField(pk=True)
-    bidder = fields.CharField(36)
-    bid = fields.BigIntField()
-    auction = fields.ForeignKeyField('models.EnglishAuction', 'auction_bids', index=True)
+    bidder = fields.ForeignKeyField('models.Holder', 'english_bids', index=True)
+    amount = fields.BigIntField()
+    auction = fields.ForeignKeyField('models.EnglishAuction', 'bids', index=True)
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
 class DutchAuction(Model):
     id = fields.BigIntField(pk=True)
-    fa2 = fields.CharField(36)
-    status = fields.IntEnumField(AuctionStatus)
+    fa2 = fields.ForeignKeyField('models.FA2Token', 'dutch_auctions', index=True)
+    status = fields.CharEnumField(AuctionStatus)
     objkt_id = fields.BigIntField(index=True)
-    creator = fields.CharField(36)
+    creator = fields.ForeignKeyField('models.Holder', 'created_dutch_auctions', index=True)
     start_time = fields.DatetimeField()
     end_time = fields.DatetimeField()
     start_price = fields.BigIntField()
     end_price = fields.BigIntField()
-    buyer = fields.CharField(36, null=True)
+    buyer = fields.ForeignKeyField('models.Holder', 'won_dutch_auctions', index=True, null=True)
     buy_price=fields.BigIntField(null=True)
 
     level = fields.BigIntField()
@@ -162,12 +165,12 @@ class DutchAuction(Model):
 
 class Bid(Model):
     id = fields.BigIntField(pk=True)
-    creator = fields.CharField(36)
+    creator = fields.ForeignKeyField('models.Holder', 'bids', index=True)
     objkt_id = fields.BigIntField(index=True)
-    fa2 = fields.CharField(36)
+    fa2 = fields.ForeignKeyField('models.FA2Token', 'bids', index=True)
     price = fields.BigIntField()
-    status = fields.IntEnumField(AuctionStatus)
-    seller = fields.CharField(36, null=True)
+    status = fields.CharEnumField(AuctionStatus)
+    seller = fields.ForeignKeyField('models.Holder', 'sold_bids', index=True, null=True)
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()

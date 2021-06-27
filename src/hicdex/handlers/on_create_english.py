@@ -13,12 +13,16 @@ async def on_create_english(
     ctx: HandlerContext,
     create_auction: Transaction[CreateAuctionParameter, ObjktbidEnglishStorage],
 ) -> None:
+    fa2, _ = await models.FA2Token.get_or_create(address=create_auction.parameter.fa2)
+    creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
+
+
     auction_model = models.EnglishAuction(
         id=int(create_auction.storage.auction_id) - 1,  # type: ignore
-        fa2=create_auction.parameter.fa2,
+        fa2=fa2,
         status=models.AuctionStatus.ACTIVE,
         objkt_id=create_auction.parameter.objkt_id,
-        creator=create_auction.data.sender_address,
+        creator=creator,
         start_time=create_auction.parameter.start_time,
         end_time=create_auction.parameter.end_time,
         price_increment=create_auction.parameter.price_increment,
@@ -31,8 +35,8 @@ async def on_create_english(
     await auction_model.save()
 
     bid = models.EnglishBid(
-        bidder=create_auction.data.sender_address,
-        bid=0,
+        bidder=creator,
+        amount=0,
         auction=auction_model,
 
 

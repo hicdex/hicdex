@@ -14,5 +14,5 @@ async def on_cancel_english(
     cancel_auction: Transaction[CancelAuctionParameter, ObjktbidEnglishStorage],
 ) -> None:
     auction_model = await models.EnglishAuction.filter(id=int(cancel_auction.parameter.__root__)).get()
-    auction_model.status = models.AuctionStatus.CANCELED
+    auction_model.status = models.AuctionStatus.CANCELLED
     await auction_model.save()

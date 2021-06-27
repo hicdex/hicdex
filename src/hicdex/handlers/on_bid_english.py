@@ -14,9 +14,11 @@ async def on_bid_english(
     bid: Transaction[BidParameter, ObjktbidEnglishStorage],
 ) -> None:
     auction = await models.EnglishAuction.filter(id=int(bid.parameter.__root__)).get()
+    bidder, _ = await models.Holder.get_or_create(address=bid.data.sender_address)
+
     bid = models.EnglishBid(
-        bidder=bid.data.sender_address,
-        bid=bid.data.amount,
+        bidder=bidder,
+        amount=bid.data.amount,
         auction=auction,
 
         timestamp=bid.data.timestamp,
