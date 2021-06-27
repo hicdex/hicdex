@@ -19,14 +19,25 @@ async def on_create_english(
         status=models.AuctionStatus.ACTIVE,
         objkt_id=create_auction.parameter.objkt_id,
         creator=create_auction.data.sender_address,
-        highest_bidder=create_auction.data.sender_address,
-        highest_bid=0,
         start_time=create_auction.parameter.start_time,
         end_time=create_auction.parameter.end_time,
         price_increment=create_auction.parameter.price_increment,
         extension_time=create_auction.parameter.extension_time,
         reserve=create_auction.parameter.reserve,
+
         timestamp=create_auction.data.timestamp,
         level=create_auction.data.level,
     )
     await auction_model.save()
+
+    bid = models.EnglishBid(
+        bidder=create_auction.data.sender_address,
+        bid=0,
+        auction=auction_model,
+
+
+        timestamp=create_auction.data.timestamp,
+        level=create_auction.data.level,
+    )
+    await bid.save()
+
