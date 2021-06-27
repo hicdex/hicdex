@@ -14,6 +14,7 @@ async def on_buy_dutch(
 ) -> None:
     auction_model = await models.DutchAuction.filter(id=int(buy.parameter.__root__)).get()
     auction_model.buyer = buy.data.sender_address
+    assert buy.data.amount is not None
     auction_model.buy_price = buy.data.amount
     auction_model.status=models.AuctionStatus.CONCLUDED
     await auction_model.save()

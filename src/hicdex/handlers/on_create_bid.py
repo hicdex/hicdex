@@ -24,4 +24,3 @@ async def on_create_bid(
         timestamp=bid.data.timestamp,
     )
     await bid_model.save()
-
