@@ -126,13 +126,20 @@ class EnglishAuction(Model):
     status = fields.IntEnumField(AuctionStatus)
     objkt_id = fields.BigIntField(index=True)
     creator = fields.CharField(36)
-    highest_bidder = fields.CharField(36)
-    highest_bid = fields.BigIntField()
     start_time = fields.DatetimeField()
     end_time = fields.DatetimeField()
     extension_time = fields.BigIntField
     price_increment = fields.BigIntField()
     reserve = fields.BigIntField()
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+class EnglishBid(Model):
+    id = fields.BigIntField(pk=True)
+    bidder = fields.CharField(36)
+    bid = fields.BigIntField()
+    auction = fields.ForeignKeyField('models.EnglishAuction', 'auction_bids', index=True)
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
