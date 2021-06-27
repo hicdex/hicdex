@@ -14,6 +14,7 @@ async def on_bid_english(
     bid: Transaction[BidParameter, ObjktbidEnglishStorage],
 ) -> None:
     auction_model = await models.EnglishAuction.filter(id=int(bid.parameter.__root__)).get()
+    assert bid.data.amount is not None
     auction_model.highest_bid = bid.data.amount
     auction_model.highest_bidder = bid.data.sender_address
     await auction_model.save()

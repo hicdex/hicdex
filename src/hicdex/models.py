@@ -159,7 +159,7 @@ class Bid(Model):
     objkt_id = fields.BigIntField(index=True)
     fa2 = fields.CharField(36)
     price = fields.BigIntField()
-    status = fields.IntEnumField(SwapStatus)
+    status = fields.IntEnumField(AuctionStatus)
     seller = fields.CharField(36, null=True)
 
     level = fields.BigIntField()
