@@ -8,16 +8,25 @@ from typing import Dict
 from pydantic import BaseModel
 
 
-class Swaps(BaseModel):
+class Asks(BaseModel):
     fa2: str
     issuer: str
     objkt_id: str
     xtz_per_objkt: str
 
 
-class ObjktbidBidStorage(BaseModel):
+class Bids(BaseModel):
+    fa2: str
+    issuer: str
+    objkt_id: str
+    xtz_per_objkt: str
+
+
+class ObjktbidMarketplaceStorage(BaseModel):
     admin: str
+    ask_id: str
+    asks: Dict[str, Asks]
+    bid_id: str
+    bids: Dict[str, Bids]
     management_fee: str
     metadata: Dict[str, str]
-    swap_id: str
-    swaps: Dict[str, Swaps]

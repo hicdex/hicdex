@@ -174,3 +174,16 @@ class Bid(Model):
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
+class Ask(Model):
+    id = fields.BigIntField(pk=True)
+    creator = fields.ForeignKeyField('models.Holder', 'asks', index=True)
+    objkt_id = fields.BigIntField(index=True)
+    fa2 = fields.ForeignKeyField('models.FA2Token', 'asks', index=True)
+    price = fields.BigIntField()
+    status = fields.CharEnumField(AuctionStatus)
+    buyer = fields.ForeignKeyField('models.Holder', 'bought_asks', index=True, null=True)
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+

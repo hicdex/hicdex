@@ -25,14 +25,14 @@ contracts:
     address: KT1JHdHohUVtwdrg2kvxveR4aH1fBJpi757p
     typename: split_contract_a
   OBJKTBID_english:
-    address: ${OB_ENGLISH:-KT1UR6tGUUipGYfcZevUmM2hXuoJDJNEt8uZ}
+    address: ${OB_ENGLISH:-KT1TsZ5j6VkfWrYjt7jx4HKnSyrpNT4Y1cEv}
     typename: objktbid_english
   OBJKTBID_dutch:
-    address: ${OB_DUTCH:-KT1GJhw9ea1dGxPuUmQYmhAQoiZv4MghJwMZ}
+    address: ${OB_DUTCH:-KT19cc5G9XFVwoePxtKbjA5R7U8qSpZSJiry}
     typename: objktbid_dutch
-  OBJKTBID_bid:
-    address: ${OB_BID:-KT1UDbtXhMJe981vYmeYarDA2nzNXpX2xwS6}
-    typename: objktbid_bid
+  OBJKTBID_marketplace:
+    address: ${OB_MARKETPLACE:-KT1Gy7NkvdQM5JSHmZL8LmVVmjEC6vLrXt4Z}
+    typename: objktbid_marketplace
 
 datasources:
   tzkt_mainnet:
@@ -43,96 +43,96 @@ datasources:
     url: ${TZKT_TEST_URL:-https://api.florencenet.tzkt.io/}
 
 indexes:    
-  hen_mainnet:
-    kind: operation
-    datasource: tzkt_mainnet
-    types:
-      - transaction
-      - origination
-    contracts:
-      - HEN_minter
-      - HEN_objkts
-      - HEN_subjkts
-      - HDAO_curation
-      - HDAO_ledger
-    handlers:
-      - callback: on_mint
-        pattern:
-          - type: transaction
-            destination: HEN_minter
-            entrypoint: mint_OBJKT
-          - type: transaction
-            destination: HEN_objkts
-            entrypoint: mint
-      - callback: on_swap
-        pattern:
-          - type: transaction
-            destination: HEN_minter
-            entrypoint: swap
-      - callback: on_cancel_swap
-        pattern:
-          - type: transaction
-            destination: HEN_minter
-            entrypoint: cancel_swap
-      - callback: on_collect
-        pattern:
-          - type: transaction
-            destination: HEN_minter
-            entrypoint: collect
+  # hen_mainnet:
+  #   kind: operation
+  #   datasource: tzkt_mainnet
+  #   types:
+  #     - transaction
+  #     - origination
+  #   contracts:
+  #     - HEN_minter
+  #     - HEN_objkts
+  #     - HEN_subjkts
+  #     - HDAO_curation
+  #     - HDAO_ledger
+  #   handlers:
+  #     - callback: on_mint
+  #       pattern:
+  #         - type: transaction
+  #           destination: HEN_minter
+  #           entrypoint: mint_OBJKT
+  #         - type: transaction
+  #           destination: HEN_objkts
+  #           entrypoint: mint
+  #     - callback: on_swap
+  #       pattern:
+  #         - type: transaction
+  #           destination: HEN_minter
+  #           entrypoint: swap
+  #     - callback: on_cancel_swap
+  #       pattern:
+  #         - type: transaction
+  #           destination: HEN_minter
+  #           entrypoint: cancel_swap
+  #     - callback: on_collect
+  #       pattern:
+  #         - type: transaction
+  #           destination: HEN_minter
+  #           entrypoint: collect
 
-      - callback: on_transfer
-        pattern:
-          - type: transaction
-            destination: HEN_objkts
-            entrypoint: transfer
-      - callback: on_registry
-        pattern:
-          - type: transaction
-            destination: HEN_subjkts
-            entrypoint: registry
+  #     - callback: on_transfer
+  #       pattern:
+  #         - type: transaction
+  #           destination: HEN_objkts
+  #           entrypoint: transfer
+  #     - callback: on_registry
+  #       pattern:
+  #         - type: transaction
+  #           destination: HEN_subjkts
+  #           entrypoint: registry
 
-      - callback: on_hdaol_batch
-        pattern:
-          - type: transaction
-            destination: HDAO_ledger
-            entrypoint: hDAO_batch
-      - callback: on_hdaol_transfer
-        pattern:
-          - type: transaction
-            destination: HDAO_ledger
-            entrypoint: transfer
+  #     - callback: on_hdaol_batch
+  #       pattern:
+  #         - type: transaction
+  #           destination: HDAO_ledger
+  #           entrypoint: hDAO_batch
+  #     - callback: on_hdaol_transfer
+  #       pattern:
+  #         - type: transaction
+  #           destination: HDAO_ledger
+  #           entrypoint: transfer
 
-      - callback: on_hdaoc_claim
-        pattern:
-          - type: transaction
-            destination: HDAO_curation
-            entrypoint: claim_hDAO
-      - callback: on_hdaoc_curate
-        pattern:
-          - type: transaction
-            destination: HDAO_curation
-            entrypoint: curate
+  #     - callback: on_hdaoc_claim
+  #       pattern:
+  #         - type: transaction
+  #           destination: HDAO_curation
+  #           entrypoint: claim_hDAO
+  #     - callback: on_hdaoc_curate
+  #       pattern:
+  #         - type: transaction
+  #           destination: HDAO_curation
+  #           entrypoint: curate
 
-  split_contract_a:
-    kind: operation
-    datasource: tzkt_mainnet
-    types:
-      - transaction
-      - origination
-    handlers:
-      - callback: on_split_contract_origination_a
-        pattern:
-          - type: origination
-            similar_to: SPLIT_contract_sample_a
-    stateless: True
+  # split_contract_a:
+  #   kind: operation
+  #   datasource: tzkt_mainnet
+  #   types:
+  #     - transaction
+  #     - origination
+  #   handlers:
+  #     - callback: on_split_contract_origination_a
+  #       pattern:
+  #         - type: origination
+  #           similar_to: SPLIT_contract_sample_a
+  #   stateless: True
 
-  objkt_operator:
-    kind: big_map
-    datasource: tzkt_mainnet
-    handlers:
-      - callback: on_operator_update
-        contract: HEN_objkts
-        path: operators
+  # objkt_operator:
+  #   kind: big_map
+  #   datasource: tzkt_mainnet
+  #   handlers:
+  #     - callback: on_operator_update
+  #       contract: HEN_objkts
+  #       path: operators
   
   objktbid_testnet:
     kind: operation
@@ -140,7 +140,7 @@ indexes:
     contracts:
       - OBJKTBID_english
       - OBJKTBID_dutch
-      - OBJKTBID_bid
+      - OBJKTBID_marketplace
     handlers:
       - callback: on_create_english
         pattern:
@@ -182,15 +182,30 @@ indexes:
       - callback: on_create_bid
         pattern:
           - type: transaction
-            destination: OBJKTBID_bid
+            destination: OBJKTBID_marketplace
             entrypoint: bid
+      - callback: on_create_ask
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_marketplace
+            entrypoint: ask
       - callback: on_retract_bid
         pattern:
           - type: transaction
-            destination: OBJKTBID_bid
+            destination: OBJKTBID_marketplace
             entrypoint: retract_bid
-      - callback: on_swap_bid
+      - callback: on_retract_ask
         pattern:
           - type: transaction
-            destination: OBJKTBID_bid
-            entrypoint: swap
+            destination: OBJKTBID_marketplace
+            entrypoint: retract_ask
+      - callback: on_fulfill_bid
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_marketplace
+            entrypoint: fulfill_bid
+      - callback: on_fulfill_ask
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_marketplace
+            entrypoint: fulfill_ask
