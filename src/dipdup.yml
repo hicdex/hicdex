@@ -25,13 +25,13 @@ contracts:
     address: KT1XhXv6jBpkahnvrtdiSi8foWXneWEjcz6F
     typename: split_contract_a
   OBJKTBID_english:
-    address: ${OB_ENGLISH:-KT1Wvk8fon9SgNEPQKewoSL2ziGGuCQebqZc}
+    address: ${OB_ENGLISH:-KT1TnViBrkVrSC5hNtgMCkrgSuhtArETkmQH}
     typename: objktbid_english
   OBJKTBID_dutch:
-    address: ${OB_DUTCH:-KT1ET45vnyEFMLS9wX1dYHEs9aCN3twDEiQw}
+    address: ${OB_DUTCH:-KT1GCYHDbcFWXQuoZNCEX8UefpnWGPkGZnoc}
     typename: objktbid_dutch
   OBJKTBID_marketplace:
-    address: ${OB_MARKETPLACE:-KT1FvqJwEDWb1Gwc55Jd1jjTHRVWbYKUUpyq}
+    address: ${OB_MARKETPLACE:-KT1MH2EXaeKsqfto6mkRXwVEvcbSk4WdbmpU}
     typename: objktbid_marketplace
 
 datasources:
