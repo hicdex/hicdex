@@ -9,7 +9,7 @@ async def on_create_dutch(
     ctx: HandlerContext,
     create_auction: Transaction[CreateAuctionParameter, ObjktbidDutchStorage],
 ) -> None:
-    fa2, _ = await models.FA2Token.get_or_create(address=create_auction.parameter.fa2)
+    fa2, _ = await models.FA2.get_or_create(contract=create_auction.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
     artist, _ = await models.Holder.get_or_create(address=create_auction.parameter.artist)
 

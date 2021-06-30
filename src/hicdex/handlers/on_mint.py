@@ -1,7 +1,7 @@
 import hicdex.models as models
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
-from hicdex.metadata_utils import fix_token_metadata
+from hicdex.metadata_utils import fix_other_metadata, fix_token_metadata
 from hicdex.types.hen_minter.parameter.mint_objkt import MintOBJKTParameter
 from hicdex.types.hen_minter.storage import HenMinterStorage
 from hicdex.types.hen_objkts.parameter.mint import MintParameter
@@ -48,3 +48,4 @@ async def on_mint(
     await seller_holding.save()
 
     await fix_token_metadata(token)
+    await fix_other_metadata()

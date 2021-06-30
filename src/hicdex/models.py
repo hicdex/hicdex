@@ -123,14 +123,13 @@ class AuctionStatus(str, Enum):
     CONCLUDED = 'concluded'
 
 
-class FA2Token(Model):
-    address = fields.CharField(36, pk=True)
-    symbol = fields.TextField()
+class FA2(Model):
+    contract = fields.CharField(36, pk=True)
 
 
 class EnglishAuction(Model):
     id = fields.BigIntField(pk=True)
-    fa2 = fields.ForeignKeyField('models.FA2Token', 'english_auctions', index=True)
+    fa2 = fields.ForeignKeyField('models.FA2', 'english_auctions', index=True)
     status = fields.CharEnumField(AuctionStatus)
     objkt_id = fields.BigIntField(index=True)
     creator = fields.ForeignKeyField('models.Holder', 'created_english_auctions', index=True)
@@ -158,7 +157,7 @@ class EnglishBid(Model):
 
 class DutchAuction(Model):
     id = fields.BigIntField(pk=True)
-    fa2 = fields.ForeignKeyField('models.FA2Token', 'dutch_auctions', index=True)
+    fa2 = fields.ForeignKeyField('models.FA2', 'dutch_auctions', index=True)
     status = fields.CharEnumField(AuctionStatus)
     objkt_id = fields.BigIntField(index=True)
     creator = fields.ForeignKeyField('models.Holder', 'created_dutch_auctions', index=True)
@@ -180,7 +179,7 @@ class Bid(Model):
     creator = fields.ForeignKeyField('models.Holder', 'bids', index=True)
     artist = fields.ForeignKeyField('models.Holder', 'starring_bids', index=True)
     objkt_id = fields.BigIntField(index=True)
-    fa2 = fields.ForeignKeyField('models.FA2Token', 'bids', index=True)
+    fa2 = fields.ForeignKeyField('models.FA2', 'bids', index=True)
     price = fields.BigIntField()
     royalties = fields.BigIntField()
     status = fields.CharEnumField(AuctionStatus)
@@ -195,7 +194,7 @@ class Ask(Model):
     creator = fields.ForeignKeyField('models.Holder', 'asks', index=True)
     artist = fields.ForeignKeyField('models.Holder', 'starring_asks', index=True)
     objkt_id = fields.BigIntField(index=True)
-    fa2 = fields.ForeignKeyField('models.FA2Token', 'asks', index=True)
+    fa2 = fields.ForeignKeyField('models.FA2', 'asks', index=True)
     price = fields.BigIntField()
     royalties = fields.BigIntField()
     amount = fields.BigIntField()

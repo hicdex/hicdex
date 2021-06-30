@@ -9,7 +9,7 @@ async def on_create_ask(
     ctx: HandlerContext,
     ask: Transaction[AskParameter, ObjktbidMarketplaceStorage],
 ) -> None:
-    fa2, _ = await models.FA2Token.get_or_create(address=ask.parameter.fa2)
+    fa2, _ = await models.FA2.get_or_create(contract=ask.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=ask.data.sender_address)
     artist, _ = await models.Holder.get_or_create(address=ask.parameter.artist)
 
