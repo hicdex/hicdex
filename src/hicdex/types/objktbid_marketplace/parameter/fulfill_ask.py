@@ -7,5 +7,4 @@ from pydantic import BaseModel
 
 
 class FulfillAskParameter(BaseModel):
-    amount: str
-    ask_id: str
+    __root__: str
