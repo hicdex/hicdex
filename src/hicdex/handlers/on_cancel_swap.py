@@ -11,4 +11,5 @@ async def on_cancel_swap(
 ) -> None:
     swap = await models.Swap.filter(id=int(cancel_swap.parameter.__root__)).get()
     swap.status = models.SwapStatus.CANCELED
+    swap.level = cancel_swap.data.level
     await swap.save()

@@ -22,7 +22,7 @@ contracts:
     address: KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW
     typename: hdao_ledger
   SPLIT_contract_sample_a:
-    address: KT1JHdHohUVtwdrg2kvxveR4aH1fBJpi757p
+    address: KT1XhXv6jBpkahnvrtdiSi8foWXneWEjcz6F
     typename: split_contract_a
   OBJKTBID_english:
     address: ${OB_ENGLISH:-KT1TnViBrkVrSC5hNtgMCkrgSuhtArETkmQH}

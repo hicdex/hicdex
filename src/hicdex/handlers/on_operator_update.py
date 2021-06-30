@@ -13,20 +13,20 @@ _logger = logging.getLogger(__name__)
 
 async def on_operator_update(
     ctx: HandlerContext,
-    operation: BigMapDiff[OperatorsKey, OperatorsValue],
+    operators: BigMapDiff[OperatorsKey, OperatorsValue],
 ) -> None:
     try:
-        token = await models.Token.filter(id=int(operation.key.token_id)).get()
+        token = await models.Token.filter(id=int(operators.key.token_id)).get()
     except DoesNotExist:
-        _logger.info(f'token {operation.key.token_id} does not exist for operator update')
+        _logger.info(f'token {operators.key.token_id} does not exist for operator update')
         return
-    owner, _ = await models.Holder.get_or_create(address=operation.key.owner)
-    operator = operation.key.operator
+    owner, _ = await models.Holder.get_or_create(address=operators.key.owner)
+    operator = operators.key.operator
 
-    if operation.action == BigMapAction.ADD:
+    if operators.action == BigMapAction.ADD:
         token_operator = await models.TokenOperator.create(token=token, owner=owner, operator=operator)
 
-    if operation.action == BigMapAction.REMOVE:
+    if operators.action == BigMapAction.REMOVE:
         try:
             token_operator = await models.TokenOperator.filter(token=token, owner=owner, operator=operator).get()
             await token_operator.delete()

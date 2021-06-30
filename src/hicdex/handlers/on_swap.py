@@ -25,6 +25,6 @@ async def on_swap(
     )
     await swap_model.save()
 
+    await fix_other_metadata()
     if not token.artifact_uri and not token.title:
         await fix_token_metadata(token)
-    #     await fix_other_metadata()
