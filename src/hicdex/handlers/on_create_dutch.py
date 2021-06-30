@@ -15,6 +15,7 @@ async def on_create_dutch(
 ) -> None:
     fa2, _ = await models.FA2Token.get_or_create(address=create_auction.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
+    artist, _ = await models.Holder.get_or_create(address=create_auction.parameter.artist)
 
     auction_model = models.DutchAuction(
         id=int(create_auction.storage.auction_id) - 1,  # type: ignore
@@ -22,6 +23,8 @@ async def on_create_dutch(
         status=models.AuctionStatus.ACTIVE,
         objkt_id=create_auction.parameter.objkt_id,
         creator=creator,
+        artist=artist,
+        royalties=create_auction.parameter.royalties,
         start_time=create_auction.parameter.start_time,
         end_time=create_auction.parameter.end_time,
         start_price=create_auction.parameter.start_price,

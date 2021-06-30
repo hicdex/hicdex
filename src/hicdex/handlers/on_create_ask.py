@@ -15,6 +15,7 @@ async def on_create_ask(
 ) -> None:
     fa2, _ = await models.FA2Token.get_or_create(address=ask.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=ask.data.sender_address)
+    artist, _ = await models.Holder.get_or_create(address=ask.parameter.artist)
 
     ask_model = models.Ask(
         id=int(ask.storage.ask_id) - 1,  # type: ignore
@@ -25,5 +26,9 @@ async def on_create_ask(
         status=models.AuctionStatus.ACTIVE,
         level=ask.data.level,
         timestamp=ask.data.timestamp,
+        artist=artist,
+        royalties=ask.parameter.royalties,
+        amount=ask.parameter.amount,
+        amount_left=ask.parameter.amount,
     )
     await ask_model.save()

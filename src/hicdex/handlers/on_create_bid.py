@@ -4,6 +4,7 @@ from dipdup.models import OperationData, Origination, Transaction
 from dipdup.context import HandlerContext
 
 import hicdex.models as models
+from hicdex.types.hen_minter.storage import Royalties
 
 from hicdex.types.objktbid_marketplace.parameter.bid import BidParameter
 from hicdex.types.objktbid_marketplace.storage import ObjktbidMarketplaceStorage
@@ -15,6 +16,7 @@ async def on_create_bid(
 ) -> None:
     fa2, _ = await models.FA2Token.get_or_create(address=bid.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=bid.data.sender_address)
+    artist, _ = await models.Holder.get_or_create(address=bid.parameter.artist)
 
     bid_model = models.Bid(
         id=int(bid.storage.bid_id) - 1,  # type: ignore
@@ -25,5 +27,7 @@ async def on_create_bid(
         status=models.AuctionStatus.ACTIVE,
         level=bid.data.level,
         timestamp=bid.data.timestamp,
+        artist=artist,
+        royalties=bid.parameter.royalties,
     )
     await bid_model.save()

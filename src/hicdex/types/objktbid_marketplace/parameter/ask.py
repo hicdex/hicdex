@@ -7,6 +7,9 @@ from pydantic import BaseModel
 
 
 class AskParameter(BaseModel):
+    amount: str
+    artist: str
     fa2: str
     objkt_id: str
     price: str
+    royalties: str

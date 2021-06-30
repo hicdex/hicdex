@@ -7,10 +7,12 @@ from pydantic import BaseModel
 
 
 class CreateAuctionParameter(BaseModel):
+    artist: str
     end_time: str
     extension_time: str
     fa2: str
     objkt_id: str
     price_increment: str
     reserve: str
+    royalties: str
     start_time: str

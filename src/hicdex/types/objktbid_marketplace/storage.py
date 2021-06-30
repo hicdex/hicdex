@@ -9,16 +9,21 @@ from pydantic import BaseModel
 
 
 class Asks(BaseModel):
+    amount: str
+    artist: str
     fa2: str
     issuer: str
     objkt_id: str
+    royalties: str
     xtz_per_objkt: str
 
 
 class Bids(BaseModel):
+    artist: str
     fa2: str
     issuer: str
     objkt_id: str
+    royalties: str
     xtz_per_objkt: str
 
 

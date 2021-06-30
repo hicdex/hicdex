@@ -9,11 +9,13 @@ from pydantic import BaseModel
 
 
 class Auctions(BaseModel):
+    artist: str
     creator: str
     end_price: str
     end_time: str
     fa2: str
     objkt_id: str
+    royalties: str
     start_price: str
     start_time: str
     state: str

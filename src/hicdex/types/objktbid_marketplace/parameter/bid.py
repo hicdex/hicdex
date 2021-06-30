@@ -7,5 +7,7 @@ from pydantic import BaseModel
 
 
 class BidParameter(BaseModel):
+    artist: str
     fa2: str
     objkt_id: str
+    royalties: str

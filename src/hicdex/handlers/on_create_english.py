@@ -15,6 +15,7 @@ async def on_create_english(
 ) -> None:
     fa2, _ = await models.FA2Token.get_or_create(address=create_auction.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
+    artist, _ = await models.Holder.get_or_create(address=create_auction.parameter.artist)
 
 
     auction_model = models.EnglishAuction(
@@ -23,6 +24,8 @@ async def on_create_english(
         status=models.AuctionStatus.ACTIVE,
         objkt_id=create_auction.parameter.objkt_id,
         creator=creator,
+        artist=artist,
+        royalties=create_auction.parameter.royalties,
         start_time=create_auction.parameter.start_time,
         end_time=create_auction.parameter.end_time,
         price_increment=create_auction.parameter.price_increment,

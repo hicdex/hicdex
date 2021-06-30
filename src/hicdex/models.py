@@ -128,7 +128,9 @@ class EnglishAuction(Model):
     fa2 = fields.ForeignKeyField('models.FA2Token', 'english_auctions', index=True)
     status = fields.CharEnumField(AuctionStatus)
     objkt_id = fields.BigIntField(index=True)
-    creator = fields.ForeignKeyField('models.Holder', 'english_auctions', index=True)
+    creator = fields.ForeignKeyField('models.Holder', 'created_english_auctions', index=True)
+    artist = fields.ForeignKeyField('models.Holder', 'starring_english_auctions', index=True)
+    royalties = fields.BigIntField()
     start_time = fields.DatetimeField()
     end_time = fields.DatetimeField()
     extension_time = fields.BigIntField
@@ -153,6 +155,8 @@ class DutchAuction(Model):
     status = fields.CharEnumField(AuctionStatus)
     objkt_id = fields.BigIntField(index=True)
     creator = fields.ForeignKeyField('models.Holder', 'created_dutch_auctions', index=True)
+    artist = fields.ForeignKeyField('models.Holder', 'starring_dutch_auctions', index=True)
+    royalties = fields.BigIntField()
     start_time = fields.DatetimeField()
     end_time = fields.DatetimeField()
     start_price = fields.BigIntField()
@@ -166,9 +170,11 @@ class DutchAuction(Model):
 class Bid(Model):
     id = fields.BigIntField(pk=True)
     creator = fields.ForeignKeyField('models.Holder', 'bids', index=True)
+    artist = fields.ForeignKeyField('models.Holder', 'starring_bids', index=True)
     objkt_id = fields.BigIntField(index=True)
     fa2 = fields.ForeignKeyField('models.FA2Token', 'bids', index=True)
     price = fields.BigIntField()
+    royalties = fields.BigIntField()
     status = fields.CharEnumField(AuctionStatus)
     seller = fields.ForeignKeyField('models.Holder', 'sold_bids', index=True, null=True)
 
@@ -178,12 +184,25 @@ class Bid(Model):
 class Ask(Model):
     id = fields.BigIntField(pk=True)
     creator = fields.ForeignKeyField('models.Holder', 'asks', index=True)
+    artist = fields.ForeignKeyField('models.Holder', 'starring_asks', index=True)
     objkt_id = fields.BigIntField(index=True)
     fa2 = fields.ForeignKeyField('models.FA2Token', 'asks', index=True)
     price = fields.BigIntField()
+    royalties = fields.BigIntField()
+    amount = fields.BigIntField()
+    amount_left = fields.BigIntField()
     status = fields.CharEnumField(AuctionStatus)
-    buyer = fields.ForeignKeyField('models.Holder', 'bought_asks', index=True, null=True)
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
+class FulfilledAsk(Model):
+    id = fields.BigIntField(pk=True)
+    objkt_id = fields.BigIntField(index=True)
+    ask = fields.ForeignKeyField('models.Ask', 'fulfilled', index=True)
+    seller = fields.ForeignKeyField('models.Holder', 'sold_asks', index=True)
+    buyer = fields.ForeignKeyField('models.Holder', 'bought_asks', index=True)
+    amount = fields.BigIntField()
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 
 class Auctions(BaseModel):
+    artist: str
     creator: str
     current_price: str
     end_time: str
@@ -18,6 +19,7 @@ class Auctions(BaseModel):
     objkt_id: str
     price_increment: str
     reserve: str
+    royalties: str
     start_time: str
     state: str
 
