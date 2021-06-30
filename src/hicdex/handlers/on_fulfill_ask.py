@@ -22,13 +22,13 @@ async def on_fulfill_ask(
         seller=seller,
         buyer=buyer,
         objkt_id=ask.objkt_id,
-        amount=int(fulfill_ask.parameter.objkt_amount),
+        amount=int(fulfill_ask.parameter.amount),
         level=fulfill_ask.data.level,
         timestamp=fulfill_ask.data.timestamp,
     )
     await fulfilled_ask.save()
 
-    ask.amount_left -= int(collect.parameter.objkt_amount)  # type: ignore
+    ask.amount_left -= int(fulfill_ask.parameter.amount)  # type: ignore
     if ask.amount_left == 0:
         ask.status = models.AuctionStatus.CONCLUDED
     await ask.save()
