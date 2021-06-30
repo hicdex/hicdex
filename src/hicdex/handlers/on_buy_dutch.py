@@ -1,12 +1,9 @@
-from typing import Optional
-
-from dipdup.models import OperationData, Origination, Transaction
-from dipdup.context import HandlerContext
-
 import hicdex.models as models
-
+from dipdup.context import HandlerContext
+from dipdup.models import Transaction
 from hicdex.types.objktbid_dutch.parameter.buy import BuyParameter
 from hicdex.types.objktbid_dutch.storage import ObjktbidDutchStorage
+
 
 async def on_buy_dutch(
     ctx: HandlerContext,
@@ -17,8 +14,7 @@ async def on_buy_dutch(
 
     auction_model.buyer = buyer
 
-    assert buy.data.amount is not None
-    auction_model.buy_price = buy.data.amount
+    auction_model.buy_price = buy.data.amount  # type: ignore
 
-    auction_model.status=models.AuctionStatus.CONCLUDED
+    auction_model.status = models.AuctionStatus.CONCLUDED
     await auction_model.save()

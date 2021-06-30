@@ -111,17 +111,22 @@ class Trade(Model):
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
+
 ####################
 # OBJKT.BID Models #
 ####################
+
 
 class AuctionStatus(str, Enum):
     ACTIVE = 'active'
     CANCELLED = 'cancelled'
     CONCLUDED = 'concluded'
 
+
 class FA2Token(Model):
     address = fields.CharField(36, pk=True)
+    symbol = fields.TextField()
+
 
 class EnglishAuction(Model):
     id = fields.BigIntField(pk=True)
@@ -140,6 +145,7 @@ class EnglishAuction(Model):
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
+
 class EnglishBid(Model):
     id = fields.BigIntField(pk=True)
     bidder = fields.ForeignKeyField('models.Holder', 'english_bids', index=True)
@@ -148,6 +154,7 @@ class EnglishBid(Model):
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
 
 class DutchAuction(Model):
     id = fields.BigIntField(pk=True)
@@ -162,10 +169,11 @@ class DutchAuction(Model):
     start_price = fields.BigIntField()
     end_price = fields.BigIntField()
     buyer = fields.ForeignKeyField('models.Holder', 'won_dutch_auctions', index=True, null=True)
-    buy_price=fields.BigIntField(null=True)
+    buy_price = fields.BigIntField(null=True)
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
 
 class Bid(Model):
     id = fields.BigIntField(pk=True)
@@ -181,6 +189,7 @@ class Bid(Model):
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
+
 class Ask(Model):
     id = fields.BigIntField(pk=True)
     creator = fields.ForeignKeyField('models.Holder', 'asks', index=True)
@@ -195,6 +204,7 @@ class Ask(Model):
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
 
 class FulfilledAsk(Model):
     id = fields.BigIntField(pk=True)

@@ -1,10 +1,6 @@
-from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction
-from dipdup.context import HandlerContext, RollbackHandlerContext
-from typing import Optional
-
-
 import hicdex.models as models
-
+from dipdup.context import HandlerContext
+from dipdup.models import Transaction
 from hicdex.types.objktbid_english.parameter.create_auction import CreateAuctionParameter
 from hicdex.types.objktbid_english.storage import ObjktbidEnglishStorage
 
@@ -16,7 +12,6 @@ async def on_create_english(
     fa2, _ = await models.FA2Token.get_or_create(address=create_auction.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
     artist, _ = await models.Holder.get_or_create(address=create_auction.parameter.artist)
-
 
     auction_model = models.EnglishAuction(
         id=int(create_auction.storage.auction_id) - 1,  # type: ignore
@@ -31,7 +26,6 @@ async def on_create_english(
         price_increment=create_auction.parameter.price_increment,
         extension_time=create_auction.parameter.extension_time,
         reserve=create_auction.parameter.reserve,
-
         timestamp=create_auction.data.timestamp,
         level=create_auction.data.level,
     )
@@ -41,10 +35,7 @@ async def on_create_english(
         bidder=creator,
         amount=0,
         auction=auction_model,
-
-
         timestamp=create_auction.data.timestamp,
         level=create_auction.data.level,
     )
     await bid.save()
-

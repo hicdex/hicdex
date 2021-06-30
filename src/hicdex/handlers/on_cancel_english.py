@@ -1,10 +1,6 @@
-from dipdup.models import OperationData, Transaction, Origination, BigMapDiff, BigMapData, BigMapAction
-from dipdup.context import HandlerContext, RollbackHandlerContext
-from typing import Optional
-
-
 import hicdex.models as models
-
+from dipdup.context import HandlerContext
+from dipdup.models import Transaction
 from hicdex.types.objktbid_english.parameter.cancel_auction import CancelAuctionParameter
 from hicdex.types.objktbid_english.storage import ObjktbidEnglishStorage
 

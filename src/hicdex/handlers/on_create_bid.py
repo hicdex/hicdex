@@ -1,11 +1,6 @@
-from typing import Optional
-
-from dipdup.models import OperationData, Origination, Transaction
-from dipdup.context import HandlerContext
-
 import hicdex.models as models
-from hicdex.types.hen_minter.storage import Royalties
-
+from dipdup.context import HandlerContext
+from dipdup.models import Transaction
 from hicdex.types.objktbid_marketplace.parameter.bid import BidParameter
 from hicdex.types.objktbid_marketplace.storage import ObjktbidMarketplaceStorage
 

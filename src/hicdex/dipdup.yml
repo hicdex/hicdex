@@ -42,98 +42,98 @@ datasources:
     kind: tzkt
     url: ${TZKT_TEST_URL:-https://api.florencenet.tzkt.io/}
 
-indexes:    
-  # hen_mainnet:
-  #   kind: operation
-  #   datasource: tzkt_mainnet
-  #   types:
-  #     - transaction
-  #     - origination
-  #   contracts:
-  #     - HEN_minter
-  #     - HEN_objkts
-  #     - HEN_subjkts
-  #     - HDAO_curation
-  #     - HDAO_ledger
-  #   handlers:
-  #     - callback: on_mint
-  #       pattern:
-  #         - type: transaction
-  #           destination: HEN_minter
-  #           entrypoint: mint_OBJKT
-  #         - type: transaction
-  #           destination: HEN_objkts
-  #           entrypoint: mint
-  #     - callback: on_swap
-  #       pattern:
-  #         - type: transaction
-  #           destination: HEN_minter
-  #           entrypoint: swap
-  #     - callback: on_cancel_swap
-  #       pattern:
-  #         - type: transaction
-  #           destination: HEN_minter
-  #           entrypoint: cancel_swap
-  #     - callback: on_collect
-  #       pattern:
-  #         - type: transaction
-  #           destination: HEN_minter
-  #           entrypoint: collect
+indexes:
+  hen_mainnet:
+    kind: operation
+    datasource: tzkt_mainnet
+    types:
+      - transaction
+      - origination
+    contracts:
+      - HEN_minter
+      - HEN_objkts
+      - HEN_subjkts
+      - HDAO_curation
+      - HDAO_ledger
+    handlers:
+      - callback: on_mint
+        pattern:
+          - type: transaction
+            destination: HEN_minter
+            entrypoint: mint_OBJKT
+          - type: transaction
+            destination: HEN_objkts
+            entrypoint: mint
+      - callback: on_swap
+        pattern:
+          - type: transaction
+            destination: HEN_minter
+            entrypoint: swap
+      - callback: on_cancel_swap
+        pattern:
+          - type: transaction
+            destination: HEN_minter
+            entrypoint: cancel_swap
+      - callback: on_collect
+        pattern:
+          - type: transaction
+            destination: HEN_minter
+            entrypoint: collect
 
-  #     - callback: on_transfer
-  #       pattern:
-  #         - type: transaction
-  #           destination: HEN_objkts
-  #           entrypoint: transfer
-  #     - callback: on_registry
-  #       pattern:
-  #         - type: transaction
-  #           destination: HEN_subjkts
-  #           entrypoint: registry
+      - callback: on_transfer
+        pattern:
+          - type: transaction
+            destination: HEN_objkts
+            entrypoint: transfer
+      - callback: on_registry
+        pattern:
+          - type: transaction
+            destination: HEN_subjkts
+            entrypoint: registry
 
-  #     - callback: on_hdaol_batch
-  #       pattern:
-  #         - type: transaction
-  #           destination: HDAO_ledger
-  #           entrypoint: hDAO_batch
-  #     - callback: on_hdaol_transfer
-  #       pattern:
-  #         - type: transaction
-  #           destination: HDAO_ledger
-  #           entrypoint: transfer
+      - callback: on_hdaol_batch
+        pattern:
+          - type: transaction
+            destination: HDAO_ledger
+            entrypoint: hDAO_batch
+      - callback: on_hdaol_transfer
+        pattern:
+          - type: transaction
+            destination: HDAO_ledger
+            entrypoint: transfer
 
-  #     - callback: on_hdaoc_claim
-  #       pattern:
-  #         - type: transaction
-  #           destination: HDAO_curation
-  #           entrypoint: claim_hDAO
-  #     - callback: on_hdaoc_curate
-  #       pattern:
-  #         - type: transaction
-  #           destination: HDAO_curation
-  #           entrypoint: curate
+      - callback: on_hdaoc_claim
+        pattern:
+          - type: transaction
+            destination: HDAO_curation
+            entrypoint: claim_hDAO
+      - callback: on_hdaoc_curate
+        pattern:
+          - type: transaction
+            destination: HDAO_curation
+            entrypoint: curate
 
-  # split_contract_a:
-  #   kind: operation
-  #   datasource: tzkt_mainnet
-  #   types:
-  #     - transaction
-  #     - origination
-  #   handlers:
-  #     - callback: on_split_contract_origination_a
-  #       pattern:
-  #         - type: origination
-  #           similar_to: SPLIT_contract_sample_a
-  #   stateless: True
+  split_contract_a:
+    kind: operation
+    datasource: tzkt_mainnet
+    types:
+      - transaction
+      - origination
+    handlers:
+      - callback: on_split_contract_origination_a
+        pattern:
+          - type: origination
+            similar_to: SPLIT_contract_sample_a
+    stateless: True
 
-  # objkt_operator:
-  #   kind: big_map
-  #   datasource: tzkt_mainnet
-  #   handlers:
-  #     - callback: on_operator_update
-  #       contract: HEN_objkts
-  #       path: operators
-  
+  objkt_operator:
+    kind: big_map
+    datasource: tzkt_mainnet
+    handlers:
+      - callback: on_operator_update
+        contract: HEN_objkts
+        path: operators
+
   objktbid_testnet:
     kind: operation
     datasource: tzkt_florencenet
@@ -162,7 +162,7 @@ indexes:
           - type: transaction
             destination: OBJKTBID_english
             entrypoint: bid
-      
+
       - callback: on_create_dutch
         pattern:
           - type: transaction
@@ -178,7 +178,7 @@ indexes:
           - type: transaction
             destination: OBJKTBID_dutch
             entrypoint: buy
-      
+
       - callback: on_create_bid
         pattern:
           - type: transaction
