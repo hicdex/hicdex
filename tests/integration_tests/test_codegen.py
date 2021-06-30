@@ -33,11 +33,12 @@ class CodegenTest(IsolatedAsyncioTestCase):
     async def test_codegen(self):
         for name in [
             'hicdex.yml',
+            'hicdex_job.yml',
         ]:
             with self.subTest(name):
                 config_path = join(dirname(__file__), name)
                 config = DipDupConfig.load([config_path])
-                config.initialize()
+                config.pre_initialize()
                 config.package = 'tmp_test_dipdup'
 
                 if config.package in sys.modules:
