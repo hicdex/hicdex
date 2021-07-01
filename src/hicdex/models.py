@@ -144,6 +144,9 @@ class EnglishAuction(Model):
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
+    class Meta:
+        table = 'english_auction'
+
 
 class EnglishBid(Model):
     id = fields.BigIntField(pk=True)
@@ -153,6 +156,9 @@ class EnglishBid(Model):
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
+    class Meta:
+        table = 'english_bid'
 
 
 class DutchAuction(Model):
@@ -172,6 +178,9 @@ class DutchAuction(Model):
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
+    class Meta:
+        table = 'dutch_auction'
 
 
 class Bid(Model):
@@ -215,3 +224,6 @@ class FulfilledAsk(Model):
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
+    class Meta:
+        table = 'fulfilled_ask'
