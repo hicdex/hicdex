@@ -110,3 +110,120 @@ class Trade(Model):
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
+
+####################
+# OBJKT.BID Models #
+####################
+
+
+class AuctionStatus(str, Enum):
+    ACTIVE = 'active'
+    CANCELLED = 'cancelled'
+    CONCLUDED = 'concluded'
+
+
+class FA2(Model):
+    contract = fields.CharField(36, pk=True)
+
+
+class EnglishAuction(Model):
+    id = fields.BigIntField(pk=True)
+    fa2 = fields.ForeignKeyField('models.FA2', 'english_auctions', index=True)
+    status = fields.CharEnumField(AuctionStatus)
+    objkt_id = fields.BigIntField(index=True)
+    creator = fields.ForeignKeyField('models.Holder', 'created_english_auctions', index=True)
+    artist = fields.ForeignKeyField('models.Holder', 'starring_english_auctions', index=True)
+    royalties = fields.BigIntField()
+    start_time = fields.DatetimeField()
+    end_time = fields.DatetimeField()
+    extension_time = fields.BigIntField
+    price_increment = fields.BigIntField()
+    reserve = fields.BigIntField()
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+    class Meta:
+        table = 'english_auction'
+
+
+class EnglishBid(Model):
+    id = fields.BigIntField(pk=True)
+    bidder = fields.ForeignKeyField('models.Holder', 'english_bids', index=True)
+    amount = fields.BigIntField()
+    auction = fields.ForeignKeyField('models.EnglishAuction', 'bids', index=True)
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+    class Meta:
+        table = 'english_bid'
+
+
+class DutchAuction(Model):
+    id = fields.BigIntField(pk=True)
+    fa2 = fields.ForeignKeyField('models.FA2', 'dutch_auctions', index=True)
+    status = fields.CharEnumField(AuctionStatus)
+    objkt_id = fields.BigIntField(index=True)
+    creator = fields.ForeignKeyField('models.Holder', 'created_dutch_auctions', index=True)
+    artist = fields.ForeignKeyField('models.Holder', 'starring_dutch_auctions', index=True)
+    royalties = fields.BigIntField()
+    start_time = fields.DatetimeField()
+    end_time = fields.DatetimeField()
+    start_price = fields.BigIntField()
+    end_price = fields.BigIntField()
+    buyer = fields.ForeignKeyField('models.Holder', 'won_dutch_auctions', index=True, null=True)
+    buy_price = fields.BigIntField(null=True)
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+    class Meta:
+        table = 'dutch_auction'
+
+
+class Bid(Model):
+    id = fields.BigIntField(pk=True)
+    creator = fields.ForeignKeyField('models.Holder', 'bids', index=True)
+    artist = fields.ForeignKeyField('models.Holder', 'starring_bids', index=True)
+    objkt_id = fields.BigIntField(index=True)
+    fa2 = fields.ForeignKeyField('models.FA2', 'bids', index=True)
+    price = fields.BigIntField()
+    royalties = fields.BigIntField()
+    status = fields.CharEnumField(AuctionStatus)
+    seller = fields.ForeignKeyField('models.Holder', 'sold_bids', index=True, null=True)
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+
+class Ask(Model):
+    id = fields.BigIntField(pk=True)
+    creator = fields.ForeignKeyField('models.Holder', 'asks', index=True)
+    artist = fields.ForeignKeyField('models.Holder', 'starring_asks', index=True)
+    objkt_id = fields.BigIntField(index=True)
+    fa2 = fields.ForeignKeyField('models.FA2', 'asks', index=True)
+    price = fields.BigIntField()
+    royalties = fields.BigIntField()
+    amount = fields.BigIntField()
+    amount_left = fields.BigIntField()
+    status = fields.CharEnumField(AuctionStatus)
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+
+class FulfilledAsk(Model):
+    id = fields.BigIntField(pk=True)
+    objkt_id = fields.BigIntField(index=True)
+    ask = fields.ForeignKeyField('models.Ask', 'fulfilled', index=True)
+    seller = fields.ForeignKeyField('models.Holder', 'sold_asks', index=True)
+    buyer = fields.ForeignKeyField('models.Holder', 'bought_asks', index=True)
+    amount = fields.BigIntField()
+
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+    class Meta:
+        table = 'fulfilled_ask'

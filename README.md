@@ -10,4 +10,4 @@ an indexer for hic et nunc objkts based on [dipdup](https://dipdup.net/) by [Bak
 - `docker-compose up -d hasura`
 - `docker-compose up hicdex`
 
-login on http://localhost:8081/console
+login on http://localhost:8080/console
