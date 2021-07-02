@@ -30,6 +30,9 @@ contracts:
   OBJKTBID_dutch:
     address: ${OB_DUTCH:-KT1ET45vnyEFMLS9wX1dYHEs9aCN3twDEiQw}
     typename: objktbid_dutch
+  OBJKTBID_dutch2:
+    address: ${OB_DUTCH:-KT1W8PqJsZcpcAgDQH9SKQSZKvjVbpjUk8Sc}
+    typename: objktbid_dutch
   OBJKTBID_marketplace:
     address: ${OB_MARKETPLACE:-KT1FvqJwEDWb1Gwc55Jd1jjTHRVWbYKUUpyq}
     typename: objktbid_marketplace
@@ -38,9 +41,6 @@ datasources:
   tzkt_mainnet:
     kind: tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
-  tzkt_florencenet:
-    kind: tzkt
-    url: ${TZKT_TEST_URL:-https://api.florencenet.tzkt.io/}
 
 indexes:
   hen_mainnet:
@@ -136,10 +136,11 @@ indexes:
 
   objktbid_testnet:
     kind: operation
-    datasource: tzkt_florencenet
+    datasource: tzkt_mainnet
     contracts:
       - OBJKTBID_english
       - OBJKTBID_dutch
+      - OBJKTBID_dutch2
       - OBJKTBID_marketplace
     handlers:
       - callback: on_create_english
@@ -177,6 +178,22 @@ indexes:
         pattern:
           - type: transaction
             destination: OBJKTBID_dutch
+            entrypoint: buy
+
+      - callback: on_create_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch2
+            entrypoint: create_auction
+      - callback: on_cancel_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch2
+            entrypoint: cancel_auction
+      - callback: on_buy_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch2
             entrypoint: buy
 
       - callback: on_create_bid
