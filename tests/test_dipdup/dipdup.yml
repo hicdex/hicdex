@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 spec_version: 1.0
 package: hicdex
+=======
+spec_version: 1.1
+package: demo_hic_et_nunc
+>>>>>>> fb51827 (Add "remove" BigMapAction, rename others (#79))
 
 database:
   kind: sqlite
