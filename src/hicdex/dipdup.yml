@@ -12,6 +12,9 @@ contracts:
   HEN_minter:
     address: KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
     typename: hen_minter
+  HEN_swap_v2:
+    address: KT1HbQepzV1nVGg8QVznG7z4RcHseD5kwqBn
+    typename: hen_swap_v2
   HEN_subjkts:
     address: KT1My1wDZHDGweCrJnQJi3wcFaS67iksirvj
     typename: hen_subjkt
@@ -51,11 +54,13 @@ indexes:
       - origination
     contracts:
       - HEN_minter
+      - HEN_swap_v2
       - HEN_objkts
       - HEN_subjkts
       - HDAO_curation
       - HDAO_ledger
     handlers:
+      # marketplace v1
       - callback: on_mint
         pattern:
           - type: transaction
@@ -80,17 +85,37 @@ indexes:
             destination: HEN_minter
             entrypoint: collect
 
+      # marketplace v2
+      - callback: on_swap_v2
+        pattern:
+          - type: transaction
+            destination: HEN_swap_v2
+            entrypoint: swap
+      - callback: on_cancel_swap_v2
+        pattern:
+          - type: transaction
+            destination: HEN_swap_v2
+            entrypoint: cancel_swap
+      - callback: on_collect_v2
+        pattern:
+          - type: transaction
+            destination: HEN_swap_v2
+            entrypoint: collect
+
+      # fa2
       - callback: on_transfer
         pattern:
           - type: transaction
             destination: HEN_objkts
             entrypoint: transfer
+
+      # subjkt
       - callback: on_registry
         pattern:
           - type: transaction
             destination: HEN_subjkts
             entrypoint: registry
-
+      # hdao
       - callback: on_hdaol_batch
         pattern:
           - type: transaction
