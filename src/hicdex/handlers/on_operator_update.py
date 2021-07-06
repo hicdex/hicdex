@@ -1,30 +1,37 @@
-import logging
-
-from tortoise.exceptions import DoesNotExist
-
 import hicdex.models as models
 from dipdup.context import HandlerContext
-from dipdup.models import BigMapAction, BigMapDiff
-from hicdex.types.hen_objkts.big_map.operators_key import OperatorsKey
-from hicdex.types.hen_objkts.big_map.operators_value import OperatorsValue
+from dipdup.models import Transaction
+from hicdex.types.hen_objkts.parameter.update_operators import (
+    UpdateOperatorsParameter,
+    UpdateOperatorsParameterItem,
+    UpdateOperatorsParameterItem1,
+)
+from hicdex.types.hen_objkts.storage import HenObjktsStorage
 
-_logger = logging.getLogger(__name__)
+# from pprint import pformat
+# ctx.logger.warning(pformat(op.remove_operator))
 
 
 async def on_operator_update(
     ctx: HandlerContext,
-    operators: BigMapDiff[OperatorsKey, OperatorsValue],
+    update_operators: Transaction[UpdateOperatorsParameter, HenObjktsStorage],
 ) -> None:
-    token, _ = await models.Token.get_or_create(id=int(operators.key.token_id))
-    owner, _ = await models.Holder.get_or_create(address=operators.key.owner)
-    operator = operators.key.operator
-
-    if operators.action == BigMapAction.ADD:
-        token_operator = await models.TokenOperator.create(token=token, owner=owner, operator=operator)
-
-    if operators.action == BigMapAction.REMOVE:
+    for op in update_operators.parameter.__root__:
         try:
-            token_operator = await models.TokenOperator.filter(token=token, owner=owner, operator=operator).get()
-            await token_operator.delete()
+            if isinstance(op, UpdateOperatorsParameterItem):
+                data_add = op.add_operator
+                token, _ = await models.Token.get_or_create(id=int(data_add.token_id))
+                owner, _ = await models.Holder.get_or_create(address=data_add.owner)
+                operator = data_add.operator
+                token_operator = await models.TokenOperator.create(
+                    token=token, owner=owner, operator=operator, level=update_operators.data.level
+                )
+            if isinstance(op, UpdateOperatorsParameterItem1):
+                data_remove = op.remove_operator
+                token, _ = await models.Token.get_or_create(id=int(data_remove.token_id))
+                owner, _ = await models.Holder.get_or_create(address=data_remove.owner)
+                operator = data_remove.operator
+                token_operator = await models.TokenOperator.filter(token=token, owner=owner, operator=operator).get()
+                await token_operator.delete()
         except:
-            _logger.info(f'failed to remove {token.id} {owner.address} {operator}')
+            pass

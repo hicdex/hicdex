@@ -144,6 +144,13 @@ indexes:
             destination: HDAO_curation
             entrypoint: curate
 
+      # operators
+      - callback: on_operator_update
+        pattern:
+          - type: transaction
+            destination: HEN_objkts
+            entrypoint: update_operators
+
   split_contract_a:
     kind: operation
     datasource: tzkt_mainnet
@@ -156,14 +163,6 @@ indexes:
           - type: origination
             similar_to: SPLIT_contract_sample_a
     stateless: True
-
-  objkt_operator:
-    kind: big_map
-    datasource: tzkt_mainnet
-    handlers:
-      - callback: on_operator_update
-        contract: HEN_objkts
-        path: operators
 
   objktbid:
     kind: operation

@@ -40,7 +40,7 @@ class Shareholder(Model):
 
 class Token(Model):
     id = fields.BigIntField(pk=True)
-    creator = fields.ForeignKeyField('models.Holder', 'tokens', index=True)
+    creator = fields.ForeignKeyField('models.Holder', 'tokens', index=True, null=True)
     title = fields.TextField(default='')
     description = fields.TextField(default='')
     artifact_uri = fields.TextField(default='')
@@ -61,6 +61,7 @@ class TokenOperator(Model):
     token = fields.ForeignKeyField('models.Token', 'operators', null=False, index=True)
     owner = fields.ForeignKeyField('models.Holder', 'owner', index=True)
     operator = fields.CharField(36)
+    level = fields.BigIntField()
 
     class Meta:
         table = 'token_operator'
