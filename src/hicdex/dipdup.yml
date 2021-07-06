@@ -9,7 +9,7 @@ contracts:
   HEN_objkts:
     address: KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton
     typename: hen_objkts
-  HEN_minter:
+  HEN_swap_v1:
     address: KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9
     typename: hen_minter
   HEN_swap_v2:
@@ -43,13 +43,13 @@ contracts:
     address: KT1QJ71jypKGgyTNtXjkCAYJZNhCKWiHuT2r
     typename: objktbid_dutch
   OBJKTBID_marketplace:
-    address: ${OB_MARKETPLACE:-KT1FvqJwEDWb1Gwc55Jd1jjTHRVWbYKUUpyq}
+    address: KT1FvqJwEDWb1Gwc55Jd1jjTHRVWbYKUUpyq
     typename: objktbid_marketplace
 
 datasources:
   tzkt_mainnet:
     kind: tzkt
-    url: ${TZKT_URL:-https://api.tzkt.io}
+    url: https://api.tzkt.io
 
 indexes:
   hen_mainnet:
@@ -59,7 +59,7 @@ indexes:
       - transaction
       - origination
     contracts:
-      - HEN_minter
+      - HEN_swap_v1
       - HEN_swap_v2
       - HEN_objkts
       - HEN_subjkts
@@ -70,7 +70,7 @@ indexes:
       - callback: on_mint
         pattern:
           - type: transaction
-            destination: HEN_minter
+            destination: HEN_swap_v1
             entrypoint: mint_OBJKT
           - type: transaction
             destination: HEN_objkts
@@ -78,17 +78,17 @@ indexes:
       - callback: on_swap
         pattern:
           - type: transaction
-            destination: HEN_minter
+            destination: HEN_swap_v1
             entrypoint: swap
       - callback: on_cancel_swap
         pattern:
           - type: transaction
-            destination: HEN_minter
+            destination: HEN_swap_v1
             entrypoint: cancel_swap
       - callback: on_collect
         pattern:
           - type: transaction
-            destination: HEN_minter
+            destination: HEN_swap_v1
             entrypoint: collect
 
       # marketplace v2
@@ -165,7 +165,7 @@ indexes:
         contract: HEN_objkts
         path: operators
 
-  objktbid_testnet:
+  objktbid:
     kind: operation
     datasource: tzkt_mainnet
     contracts:
@@ -176,6 +176,7 @@ indexes:
       - OBJKTBID_dutch_v3
       - OBJKTBID_marketplace
     handlers:
+      # english v1
       - callback: on_create_english
         pattern:
           - type: transaction
@@ -197,6 +198,7 @@ indexes:
             destination: OBJKTBID_english
             entrypoint: bid
 
+      # english v2
       - callback: on_create_english
         pattern:
           - type: transaction
@@ -218,6 +220,7 @@ indexes:
             destination: OBJKTBID_english_v2
             entrypoint: bid
 
+      # dutch v1
       - callback: on_create_dutch
         pattern:
           - type: transaction
@@ -234,6 +237,7 @@ indexes:
             destination: OBJKTBID_dutch
             entrypoint: buy
 
+      # dutch v2
       - callback: on_create_dutch
         pattern:
           - type: transaction
@@ -250,6 +254,7 @@ indexes:
             destination: OBJKTBID_dutch_v2
             entrypoint: buy
 
+      # dutch v3
       - callback: on_create_dutch
         pattern:
           - type: transaction
@@ -266,6 +271,7 @@ indexes:
             destination: OBJKTBID_dutch_v3
             entrypoint: buy
 
+      # asks/bids
       - callback: on_create_bid
         pattern:
           - type: transaction

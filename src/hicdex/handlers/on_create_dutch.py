@@ -18,7 +18,9 @@ async def on_create_dutch(
     version = CONTRACT_VERSION.get(create_auction.data.target_address, -1)  # type: ignore
     fa2, _ = await models.FA2.get_or_create(contract=create_auction.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
-    artist, _ = await models.Holder.get_or_create(address=create_auction.parameter.artist)
+    artist = creator
+    if create_auction.data.sender_address != create_auction.parameter.artist:
+        artist, _ = await models.Holder.get_or_create(address=create_auction.parameter.artist)
 
     auction_model = models.DutchAuction(
         id=int(create_auction.storage.auction_id) - 1,  # type: ignore

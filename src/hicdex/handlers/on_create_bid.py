@@ -11,7 +11,10 @@ async def on_create_bid(
 ) -> None:
     fa2, _ = await models.FA2.get_or_create(contract=bid.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=bid.data.sender_address)
-    artist, _ = await models.Holder.get_or_create(address=bid.parameter.artist)
+
+    artist = creator
+    if bid.parameter.artist != bid.data.sender_address:
+        artist, _ = await models.Holder.get_or_create(address=bid.parameter.artist)
 
     bid_model = models.Bid(
         id=int(bid.storage.bid_id) - 1,  # type: ignore

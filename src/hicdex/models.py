@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum, IntEnum
 
 from tortoise import Model, fields
@@ -40,20 +41,20 @@ class Shareholder(Model):
 class Token(Model):
     id = fields.BigIntField(pk=True)
     creator = fields.ForeignKeyField('models.Holder', 'tokens', index=True)
-    title = fields.TextField()
-    description = fields.TextField()
-    artifact_uri = fields.TextField()
-    display_uri = fields.TextField()
-    thumbnail_uri = fields.TextField()
-    metadata = fields.TextField()
+    title = fields.TextField(default='')
+    description = fields.TextField(default='')
+    artifact_uri = fields.TextField(default='')
+    display_uri = fields.TextField(default='')
+    thumbnail_uri = fields.TextField(default='')
+    metadata = fields.TextField(default='')
     extra = fields.JSONField(default={})
-    mime = fields.TextField()
-    royalties = fields.SmallIntField()
-    supply = fields.SmallIntField()
+    mime = fields.TextField(default='')
+    royalties = fields.SmallIntField(default=0)
+    supply = fields.SmallIntField(default=0)
     hdao_balance = fields.BigIntField(default=0)
 
-    level = fields.BigIntField()
-    timestamp = fields.DatetimeField()
+    level = fields.BigIntField(default=0)
+    timestamp = fields.DatetimeField(default=datetime.utcnow())
 
 
 class TokenOperator(Model):

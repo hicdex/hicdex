@@ -15,11 +15,7 @@ async def on_operator_update(
     ctx: HandlerContext,
     operators: BigMapDiff[OperatorsKey, OperatorsValue],
 ) -> None:
-    try:
-        token = await models.Token.filter(id=int(operators.key.token_id)).get()
-    except DoesNotExist:
-        _logger.info(f'token {operators.key.token_id} does not exist for operator update')
-        return
+    token, _ = await models.Token.get_or_create(id=int(operators.key.token_id))
     owner, _ = await models.Holder.get_or_create(address=operators.key.owner)
     operator = operators.key.operator
 

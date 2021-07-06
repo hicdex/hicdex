@@ -9,13 +9,12 @@ async def on_fulfill_ask(
     ctx: HandlerContext,
     fulfill_ask: Transaction[FulfillAskParameter, ObjktbidMarketplaceStorage],
 ) -> None:
-    ask = await models.Ask.filter(id=fulfill_ask.parameter.__root__).get()
-    seller = await ask.creator
+    ask = await models.Ask.filter(id=fulfill_ask.parameter.__root__).get().prefetch_related('creator')
     buyer, _ = await models.Holder.get_or_create(address=fulfill_ask.data.sender_address)
 
     fulfilled_ask = models.FulfilledAsk(
         ask=ask,
-        seller=seller,
+        seller=ask.creator,
         buyer=buyer,
         objkt_id=ask.objkt_id,
         amount=1,
