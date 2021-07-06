@@ -12,7 +12,7 @@ async def on_conclude_english(
     auction_model = await models.EnglishAuction.filter(id=int(conclude_auction.parameter.__root__)).get()
     auction_model.status = models.AuctionStatus.CONCLUDED
 
-    auction_model.update_level = conclude_auction.data.level
-    auction_model.update_timestamp = conclude_auction.data.timestamp
+    auction_model.update_level = conclude_auction.data.level  # type: ignore
+    auction_model.update_timestamp = conclude_auction.data.timestamp  # type: ignore
 
     await auction_model.save()

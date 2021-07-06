@@ -15,7 +15,7 @@ async def on_fulfill_bid(
     bid.seller = seller
     bid.status = models.AuctionStatus.CONCLUDED
 
-    bid.update_level = fulfill_bid.data.level
-    bid.update_timestamp = fulfill_bid.data.timestamp
+    bid.update_level = fulfill_bid.data.level  # type: ignore
+    bid.update_timestamp = fulfill_bid.data.timestamp  # type: ignore
 
     await bid.save()

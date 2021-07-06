@@ -4,7 +4,6 @@ from dipdup.models import Transaction
 from hicdex.types.objktbid_dutch.parameter.create_auction import CreateAuctionParameter
 from hicdex.types.objktbid_dutch.storage import ObjktbidDutchStorage
 
-
 CONTRACT_VERSION = {
     'KT1ET45vnyEFMLS9wX1dYHEs9aCN3twDEiQw': 1,
     'KT1W8PqJsZcpcAgDQH9SKQSZKvjVbpjUk8Sc': 2,
@@ -16,7 +15,7 @@ async def on_create_dutch(
     ctx: HandlerContext,
     create_auction: Transaction[CreateAuctionParameter, ObjktbidDutchStorage],
 ) -> None:
-    version = CONTRACT_VERSION.get(create_auction.data.target_address, -1)
+    version = CONTRACT_VERSION.get(create_auction.data.target_address, -1)  # type: ignore
     fa2, _ = await models.FA2.get_or_create(contract=create_auction.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
     artist, _ = await models.Holder.get_or_create(address=create_auction.parameter.artist)
@@ -38,4 +37,3 @@ async def on_create_dutch(
         level=create_auction.data.level,
     )
     await auction_model.save()
-

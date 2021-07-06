@@ -27,4 +27,3 @@ async def on_bid_english(
     if auction.end_time - bid_object.timestamp < timedelta(seconds=auction.extension_time):
         auction.end_time = bid_object.timestamp + timedelta(seconds=auction.extension_time)
         await auction.save()
-

@@ -14,7 +14,7 @@ async def on_create_english(
     ctx: HandlerContext,
     create_auction: Transaction[CreateAuctionParameter, ObjktbidEnglishStorage],
 ) -> None:
-    version = CONTRACT_VERSION.get(create_auction.data.target_address, -1)
+    version = CONTRACT_VERSION.get(create_auction.data.target_address, -1)  # type: ignore
     fa2, _ = await models.FA2.get_or_create(contract=create_auction.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
     artist, _ = await models.Holder.get_or_create(address=create_auction.parameter.artist)
