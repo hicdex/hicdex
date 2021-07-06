@@ -11,4 +11,8 @@ async def on_retract_ask(
 ) -> None:
     ask = await models.Ask.filter(id=int(retract_ask.parameter.__root__)).get()
     ask.status = models.AuctionStatus.CANCELLED
+
+    ask.update_level = retract_ask.data.level
+    ask.update_timestamp = retract_ask.data.timestamp
+
     await ask.save()

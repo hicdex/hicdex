@@ -17,4 +17,8 @@ async def on_buy_dutch(
     auction_model.buy_price = buy.data.amount  # type: ignore
 
     auction_model.status = models.AuctionStatus.CONCLUDED
+
+    auction_model.update_level = buy.data.level
+    auction_model.update_timestamp = buy.data.timestamp
+
     await auction_model.save()

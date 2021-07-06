@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import hicdex.models as models
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
@@ -20,3 +22,9 @@ async def on_bid_english(
         level=bid.data.level,
     )
     await bid_object.save()
+
+    # increase end_time of auction if the bid came in during last `extension_time` seconds
+    if auction.end_time - bid_object.timestamp < timedelta(seconds=auction.extension_time):
+        auction.end_time = bid_object.timestamp + timedelta(seconds=auction.extension_time)
+        await auction.save()
+

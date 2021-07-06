@@ -27,4 +27,6 @@ async def on_fulfill_ask(
     ask.amount_left -= 1  # type: ignore
     if ask.amount_left == 0:
         ask.status = models.AuctionStatus.CONCLUDED
+        ask.update_level = fulfill_ask.data.level
+        ask.update_timestamp = fulfill_ask.data.timestamp
     await ask.save()
