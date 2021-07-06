@@ -12,7 +12,7 @@ async def on_cancel_english(
     auction_model = await models.EnglishAuction.filter(id=int(cancel_auction.parameter.__root__)).get()
     auction_model.status = models.AuctionStatus.CANCELLED
 
-    auction_model.conclusion_level = cancel_auction.data.level
-    auction_model.conclusion_timestamp = cancel_auction.data.timestamp
+    auction_model.update_level = cancel_auction.data.level
+    auction_model.update_timestamp = cancel_auction.data.timestamp
 
     await auction_model.save()

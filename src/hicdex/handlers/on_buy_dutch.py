@@ -18,7 +18,7 @@ async def on_buy_dutch(
 
     auction_model.status = models.AuctionStatus.CONCLUDED
 
-    auction_model.conclusion_level = buy.data.level
-    auction_model.conclusion_timestamp = buy.data.timestamp
+    auction_model.update_level = buy.data.level
+    auction_model.update_timestamp = buy.data.timestamp
 
     await auction_model.save()

@@ -12,7 +12,7 @@ async def on_retract_bid(
     bid = await models.Bid.filter(id=int(retract_bid.parameter.__root__)).get()
     bid.status = models.AuctionStatus.CANCELLED
 
-    bid.conclusion_level = retract_bid.data.level
-    bid.conclusion_timestamp = retract_bid.data.timestamp
+    bid.update_level = retract_bid.data.level
+    bid.update_timestamp = retract_bid.data.timestamp
 
     await bid.save()
