@@ -28,13 +28,19 @@ contracts:
     address: KT1XhXv6jBpkahnvrtdiSi8foWXneWEjcz6F
     typename: split_contract_a
   OBJKTBID_english:
-    address: ${OB_ENGLISH:-KT1Wvk8fon9SgNEPQKewoSL2ziGGuCQebqZc}
+    address: KT1Wvk8fon9SgNEPQKewoSL2ziGGuCQebqZc
+    typename: objktbid_english
+  OBJKTBID_english_v2:
+    address: KT1XjcRq5MLAzMKQ3UHsrue2SeU2NbxUrzmU
     typename: objktbid_english
   OBJKTBID_dutch:
-    address: ${OB_DUTCH:-KT1ET45vnyEFMLS9wX1dYHEs9aCN3twDEiQw}
+    address: KT1ET45vnyEFMLS9wX1dYHEs9aCN3twDEiQw
     typename: objktbid_dutch
-  OBJKTBID_dutch2:
-    address: ${OB_DUTCH:-KT1W8PqJsZcpcAgDQH9SKQSZKvjVbpjUk8Sc}
+  OBJKTBID_dutch_v2:
+    address: KT1W8PqJsZcpcAgDQH9SKQSZKvjVbpjUk8Sc
+    typename: objktbid_dutch
+  OBJKTBID_dutch_v3:
+    address: KT1QJ71jypKGgyTNtXjkCAYJZNhCKWiHuT2r
     typename: objktbid_dutch
   OBJKTBID_marketplace:
     address: ${OB_MARKETPLACE:-KT1FvqJwEDWb1Gwc55Jd1jjTHRVWbYKUUpyq}
@@ -164,8 +170,10 @@ indexes:
     datasource: tzkt_mainnet
     contracts:
       - OBJKTBID_english
+      - OBJKTBID_english_v2
       - OBJKTBID_dutch
-      - OBJKTBID_dutch2
+      - OBJKTBID_dutch_v2
+      - OBJKTBID_dutch_v3
       - OBJKTBID_marketplace
     handlers:
       - callback: on_create_english
@@ -189,6 +197,27 @@ indexes:
             destination: OBJKTBID_english
             entrypoint: bid
 
+      - callback: on_create_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english_v2
+            entrypoint: create_auction
+      - callback: on_cancel_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english_v2
+            entrypoint: cancel_auction
+      - callback: on_conclude_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english_v2
+            entrypoint: conclude_auction
+      - callback: on_bid_english
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_english_v2
+            entrypoint: bid
+
       - callback: on_create_dutch
         pattern:
           - type: transaction
@@ -208,17 +237,33 @@ indexes:
       - callback: on_create_dutch
         pattern:
           - type: transaction
-            destination: OBJKTBID_dutch2
+            destination: OBJKTBID_dutch_v2
             entrypoint: create_auction
       - callback: on_cancel_dutch
         pattern:
           - type: transaction
-            destination: OBJKTBID_dutch2
+            destination: OBJKTBID_dutch_v2
             entrypoint: cancel_auction
       - callback: on_buy_dutch
         pattern:
           - type: transaction
-            destination: OBJKTBID_dutch2
+            destination: OBJKTBID_dutch_v2
+            entrypoint: buy
+
+      - callback: on_create_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch_v3
+            entrypoint: create_auction
+      - callback: on_cancel_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch_v3
+            entrypoint: cancel_auction
+      - callback: on_buy_dutch
+        pattern:
+          - type: transaction
+            destination: OBJKTBID_dutch_v3
             entrypoint: buy
 
       - callback: on_create_bid

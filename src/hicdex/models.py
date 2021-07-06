@@ -142,6 +142,7 @@ class EnglishAuction(Model):
     extension_time = fields.BigIntField
     price_increment = fields.BigIntField()
     reserve = fields.BigIntField()
+    contract_version = fields.SmallIntField()
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
@@ -177,6 +178,7 @@ class DutchAuction(Model):
     end_price = fields.BigIntField()
     buyer = fields.ForeignKeyField('models.Holder', 'won_dutch_auctions', index=True, null=True)
     buy_price = fields.BigIntField(null=True)
+    contract_version = fields.SmallIntField()
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
