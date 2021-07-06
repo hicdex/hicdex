@@ -137,12 +137,15 @@ class EnglishAuction(Model):
     royalties = fields.BigIntField()
     start_time = fields.DatetimeField()
     end_time = fields.DatetimeField()
-    extension_time = fields.BigIntField
+    extension_time = fields.BigIntField()
     price_increment = fields.BigIntField()
     reserve = fields.BigIntField()
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
+    conclusion_level = fields.BigIntField(null=True)
+    conclusion_timestamp = fields.DatetimeField(null=True)
 
     class Meta:
         table = 'english_auction'
@@ -179,6 +182,9 @@ class DutchAuction(Model):
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
+    conclusion_level = fields.BigIntField(null=True)
+    conclusion_timestamp = fields.DatetimeField(null=True)
+
     class Meta:
         table = 'dutch_auction'
 
@@ -197,6 +203,9 @@ class Bid(Model):
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
+    conclusion_level = fields.BigIntField(null=True)
+    conclusion_timestamp = fields.DatetimeField(null=True)
+
 
 class Ask(Model):
     id = fields.BigIntField(pk=True)
@@ -212,6 +221,9 @@ class Ask(Model):
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
+
+    conclusion_level = fields.BigIntField(null=True)
+    conclusion_timestamp = fields.DatetimeField(null=True)
 
 
 class FulfilledAsk(Model):
