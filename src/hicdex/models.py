@@ -99,6 +99,7 @@ class Swap(Model):
     status = fields.IntEnumField(SwapStatus)
     royalties = fields.SmallIntField()
     contract_version = fields.SmallIntField()
+    is_valid = fields.BooleanField(default=True)
 
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()

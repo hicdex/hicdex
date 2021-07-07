@@ -11,8 +11,11 @@ async def on_swap_v2(
     swap: Transaction[SwapParameter, HenSwapV2Storage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=swap.data.sender_address)
-    token = await models.Token.filter(id=int(swap.parameter.objkt_id)).get()
+    token, _ = await models.Token.get_or_create(id=int(swap.parameter.objkt_id))
     swap_id = int(swap.storage.counter) - 1
+
+    is_valid = swap.parameter.creator == token.creator_id and int(swap.parameter.royalties) == int(token.royalties)  # type: ignore
+
     swap_model = models.Swap(
         id=swap_id,  # type: ignore
         creator=holder,
@@ -25,6 +28,7 @@ async def on_swap_v2(
         timestamp=swap.data.timestamp,
         royalties=swap.parameter.royalties,
         contract_version=2,
+        is_valid=is_valid,
     )
     await swap_model.save()
 
