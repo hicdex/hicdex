@@ -19,6 +19,7 @@ class ShareholderStatus(str, Enum):
 class Holder(Model):
     address = fields.CharField(36, pk=True)
     name = fields.TextField(default='')
+    description = fields.TextField(default='')
     metadata_file = fields.TextField(default='')
     metadata = fields.JSONField(default={})
     hdao_balance = fields.BigIntField(default=0)

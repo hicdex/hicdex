@@ -33,5 +33,6 @@ async def on_registry(
             holder.metadata = await get_subjkt_metadata(holder)
     except:
         pass
+    holder.description = metadata.get('description', '')  # type: ignore
 
     await holder.save()
