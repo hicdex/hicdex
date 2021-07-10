@@ -1,3 +1,7 @@
+# `v1.1.1`
+
+* Fix a bug in `holder.description` indexing
+
 # `v1.1.0`
 
 * [Retry failed requests](https://github.com/dipdup-net/dipdup-py/pull/81)
