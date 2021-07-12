@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 import aiohttp
+from tortoise.query_utils import Q
 
 import hicdex.models as models
 from dipdup.utils import http_request
@@ -12,6 +13,13 @@ METADATA_PATH = '/home/dipdup/metadata/tokens'
 SUBJKT_PATH = '/home/dipdup/metadata/subjkts'
 
 _logger = logging.getLogger(__name__)
+
+broken_ids = []
+try:
+    with open(f'{METADATA_PATH}/broken.json') as broken_list:
+        broken_ids = json.load(broken_list)
+except:
+    pass
 
 
 async def fix_token_metadata(token):
@@ -29,7 +37,7 @@ async def fix_token_metadata(token):
 
 
 async def fix_other_metadata():
-    tokens = await models.Token.filter(artifact_uri='').all().order_by('id').limit(30)
+    tokens = await models.Token.filter(Q(artifact_uri='') & ~Q(id__in=broken_ids)).all().order_by('id').limit(30)
     for token in tokens:
         fixed = await fix_token_metadata(token)
         if fixed:

@@ -16,7 +16,7 @@ def send(levels_diff):
         auth=("api", api_key),
         data={
             "from": "Hicdex API <mailgun@mail.hicdex.com>",
-            "to": [to_emails],
+            "to": to_emails,
             "subject": "Rollback hicdex 3",
             "text": f"Chain reorg: {levels_diff} blocks, please reindex!",
         },
