@@ -12,7 +12,7 @@ from hicdex.utils import fromhex
 _logger = logging.getLogger(__name__)
 
 
-async def on_registry(
+async def on_subjkt_register(
     ctx: HandlerContext,
     registry: Transaction[RegistryParameter, HenSubjktStorage],
 ) -> None:

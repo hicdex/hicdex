@@ -116,7 +116,7 @@ indexes:
             entrypoint: transfer
 
       # subjkt
-      - callback: on_registry
+      - callback: on_subjkt_register
         pattern:
           - type: transaction
             destination: HEN_subjkts

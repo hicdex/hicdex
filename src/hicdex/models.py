@@ -135,6 +135,7 @@ class FA2(Model):
 
 class EnglishAuction(Model):
     id = fields.BigIntField(pk=True)
+    hash = fields.CharField(55, index=True)
     fa2 = fields.ForeignKeyField('models.FA2', 'english_auctions', index=True)
     status = fields.CharEnumField(AuctionStatus)
     objkt_id = fields.BigIntField(index=True)
@@ -173,6 +174,7 @@ class EnglishBid(Model):
 
 class DutchAuction(Model):
     id = fields.BigIntField(pk=True)
+    hash = fields.CharField(55, index=True)
     fa2 = fields.ForeignKeyField('models.FA2', 'dutch_auctions', index=True)
     status = fields.CharEnumField(AuctionStatus)
     objkt_id = fields.BigIntField(index=True)

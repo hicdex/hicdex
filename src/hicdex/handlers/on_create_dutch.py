@@ -1,8 +1,12 @@
+from hashids import Hashids
+
 import hicdex.models as models
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
 from hicdex.types.objktbid_dutch.parameter.create_auction import CreateAuctionParameter
 from hicdex.types.objktbid_dutch.storage import ObjktbidDutchStorage
+
+hashids = Hashids(salt='objkt.bid!', min_length=8)
 
 CONTRACT_VERSION = {
     'KT1ET45vnyEFMLS9wX1dYHEs9aCN3twDEiQw': 1,
@@ -15,6 +19,7 @@ async def on_create_dutch(
     ctx: HandlerContext,
     create_auction: Transaction[CreateAuctionParameter, ObjktbidDutchStorage],
 ) -> None:
+    auction_id = int(create_auction.storage.auction_id) - 1
     version = CONTRACT_VERSION.get(create_auction.data.target_address, -1)  # type: ignore
     fa2, _ = await models.FA2.get_or_create(contract=create_auction.parameter.fa2)
     creator, _ = await models.Holder.get_or_create(address=create_auction.data.sender_address)
@@ -23,7 +28,8 @@ async def on_create_dutch(
         artist, _ = await models.Holder.get_or_create(address=create_auction.parameter.artist)
 
     auction_model = models.DutchAuction(
-        id=int(create_auction.storage.auction_id) - 1,  # type: ignore
+        id=auction_id,  # type: ignore
+        hash=hashids.encode(auction_id),
         fa2=fa2,
         status=models.AuctionStatus.ACTIVE,
         objkt_id=create_auction.parameter.objkt_id,
