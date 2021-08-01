@@ -102,6 +102,7 @@ class Swap(Model):
     contract_version = fields.SmallIntField()
     is_valid = fields.BooleanField(default=True)
 
+    ophash = fields.CharField(51)
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 
@@ -114,6 +115,7 @@ class Trade(Model):
     buyer = fields.ForeignKeyField('models.Holder', 'purchases', index=True)
     amount = fields.BigIntField()
 
+    ophash = fields.CharField(51)
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
 

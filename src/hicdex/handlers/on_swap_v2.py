@@ -24,6 +24,7 @@ async def on_swap_v2(
         amount=swap.parameter.objkt_amount,
         amount_left=swap.parameter.objkt_amount,
         status=models.SwapStatus.ACTIVE,
+        ophash=swap.data.hash,
         level=swap.data.level,
         timestamp=swap.data.timestamp,
         royalties=swap.parameter.royalties,

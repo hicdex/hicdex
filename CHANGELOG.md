@@ -1,3 +1,7 @@
+# `v1.3.0`
+
+* Add `swap.ophash` and `trade.ophash`
+
 # `v1.2.0`
 
 * Add `english_auction.hash` and `dutch_auction.hash`
