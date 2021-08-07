@@ -20,6 +20,7 @@ async def on_collect_v2(
         buyer=buyer,
         token=token,
         amount=1,
+        ophash=collect.data.hash,
         level=collect.data.level,
         timestamp=collect.data.timestamp,
     )

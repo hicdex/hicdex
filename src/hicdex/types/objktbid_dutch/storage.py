@@ -5,10 +5,13 @@ from __future__ import annotations
 
 from typing import Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class Auctions(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     artist: str
     creator: str
     end_price: str
@@ -22,6 +25,9 @@ class Auctions(BaseModel):
 
 
 class ObjktbidDutchStorage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     admin: str
     auction_id: str
     auctions: Dict[str, Auctions]

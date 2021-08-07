@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class CurateParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     hDAO_amount: str
     issuer: str
     objkt_id: str

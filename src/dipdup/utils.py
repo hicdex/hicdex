@@ -1,21 +1,42 @@
 import asyncio
+import decimal
+import errno
+import importlib
 import logging
-import re
+import pkgutil
 import time
+import types
+from collections import defaultdict
 from contextlib import asynccontextmanager
+from functools import reduce
 from logging import Logger
-from typing import Any, AsyncIterator, Iterator, List, Optional
+from os import listdir, makedirs
+from os.path import dirname, exists, getsize, join
+from typing import Any, AsyncIterator, Callable, DefaultDict, Dict, Iterator, List, Optional, Sequence, TextIO, Tuple, Type, TypeVar
 
-import aiohttp
+import humps  # type: ignore
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import TransactionContext
 from tortoise.backends.sqlite.client import SqliteClient
+from tortoise.fields import DecimalField
+from tortoise.models import Model
 from tortoise.transactions import in_transaction
 
-from dipdup import __version__
+from dipdup.exceptions import HandlerImportError
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('dipdup.utils')
+
+
+def import_submodules(package: str) -> Dict[str, types.ModuleType]:
+    """Import all submodules of a module, recursively, including subpackages"""
+    results = {}
+    for _, name, is_pkg in pkgutil.walk_packages((package,)):
+        full_name = package + '.' + name
+        results[full_name] = importlib.import_module(full_name)
+        if is_pkg:
+            results.update(import_submodules(full_name))
+    return results
 
 
 @asynccontextmanager
@@ -30,14 +51,11 @@ async def slowdown(seconds: int):
 
 
 def snake_to_pascal(value: str) -> str:
-    """method_name -> MethodName"""
-    return ''.join(map(lambda x: x[0].upper() + x[1:], value.replace('.', '_').split('_')))
+    return humps.pascalize(value)
 
 
-def pascal_to_snake(name: str) -> str:
-    """MethodName -> method_name"""
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name.replace('.', '_'))
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+def pascal_to_snake(value: str) -> str:
+    return humps.depascalize(value.replace('.', '_')).replace('__', '_')
 
 
 def split_by_chunks(input_: List[Any], size: int) -> Iterator[List[Any]]:
@@ -100,34 +118,117 @@ async def in_global_transaction():
     Tortoise._connections['default'] = original_conn
 
 
-async def http_request(session: aiohttp.ClientSession, method: str, **kwargs):
-    """Wrapped aiohttp call with preconfigured headers and logging"""
-    headers = {
-        **kwargs.pop('headers', {}),
-        'User-Agent': f'dipdup/{__version__}',
-    }
-    request_string = kwargs['url'] + '?' + '&'.join([f'{key}={value}' for key, value in kwargs.get('params', {}).items()])
-    _logger.debug('Calling `%s`', request_string)
-    async with getattr(session, method)(
-        skip_auto_headers={'User-Agent'},
-        headers=headers,
-        **kwargs,
-    ) as response:
-        return await response.json()
+def is_model_class(obj: Any) -> bool:
+    """Is subclass of tortoise.Model, but not the base class"""
+    return isinstance(obj, type) and issubclass(obj, Model) and obj != Model and not getattr(obj.Meta, 'abstract', False)
+
+
+# TODO: Cache me
+def iter_models(package: str) -> Iterator[Tuple[str, Type[Model]]]:
+    """Iterate over built-in and project's models"""
+    dipdup_models = importlib.import_module('dipdup.models')
+    package_models = importlib.import_module(f'{package}.models')
+
+    for models in (dipdup_models, package_models):
+        for attr in dir(models):
+            model = getattr(models, attr)
+            if is_model_class(model):
+                app = 'int_models' if models.__name__ == 'dipdup.models' else 'models'
+                yield app, model
+
+
+def set_decimal_context(package: str) -> None:
+    context = decimal.getcontext()
+    prec = context.prec
+    for _, model in iter_models(package):
+        for field in model._meta.fields_map.values():
+            if isinstance(field, DecimalField):
+                context.prec = max(context.prec, field.max_digits + field.max_digits)
+    if prec < context.prec:
+        _logger.warning('Decimal context precision has been updated: %s -> %s', prec, context.prec)
+        # NOTE: DefaultContext used for new threads
+        decimal.DefaultContext.prec = context.prec
+        decimal.setcontext(context)
+
+
+_T = TypeVar('_T')
+_TT = TypeVar('_TT')
+
+
+def groupby(seq: Sequence[_T], key: Callable[[Any], _TT]) -> DefaultDict[_TT, List[_T]]:
+    """Group by key into defaultdict"""
+    return reduce(
+        lambda grp, val: grp[key(val)].append(val) or grp,  # type: ignore
+        seq,
+        defaultdict(list),
+    )
 
 
 class FormattedLogger(Logger):
-    def __init__(
-        self,
-        name: str,
-        fmt: Optional[str] = None,
-    ):
-        logger = logging.getLogger(name)
-        self.__class__ = type(FormattedLogger.__name__, (self.__class__, logger.__class__), {})
-        self.__dict__ = logger.__dict__
+    """Logger wrapper with additional formatting"""
+
+    def __init__(self, name: str, fmt: Optional[str] = None) -> None:
+        self.logger = logging.getLogger(name)
         self.fmt = fmt
+
+    def __getattr__(self, name: str) -> Callable:
+        if name == '_log':
+            return self._log
+        return getattr(self.logger, name)
 
     def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False, stacklevel=1):
         if self.fmt:
             msg = self.fmt.format(msg)
-        super()._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+        self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
+
+
+def iter_files(path: str, ext: Optional[str] = None) -> Iterator[TextIO]:
+    """Iterate over files in a directory. Sort alphabetically, filter by extension, skip empty files."""
+    if not exists(path):
+        raise StopIteration
+    for filename in sorted(listdir(path)):
+        filepath = join(path, filename)
+        if ext and not filename.endswith(ext):
+            continue
+        if not getsize(filepath):
+            continue
+
+        with open(filepath) as file:
+            yield file
+
+
+def mkdir_p(path: str) -> None:
+    """Create directory tree, ignore if already exists"""
+    try:
+        makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+def touch(path: str) -> None:
+    """Create empty file, ignore if already exists"""
+    mkdir_p(dirname(path))
+    try:
+        open(path, 'a').close()
+    except IOError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
+def write(path: str, content: str, overwrite: bool = False) -> bool:
+    """Write content to file, create directory tree if necessary"""
+    mkdir_p(dirname(path))
+    if exists(path) and not overwrite:
+        return False
+    with open(path, 'w') as file:
+        file.write(content)
+    return True
+
+
+def import_from(module: str, obj: str) -> Any:
+    """Import object from module, raise HandlerImportError on failure"""
+    try:
+        return getattr(importlib.import_module(module), obj)
+    except (ImportError, AttributeError) as e:
+        raise HandlerImportError(module, obj) from e

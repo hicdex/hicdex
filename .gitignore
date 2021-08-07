@@ -148,3 +148,4 @@ cython_debug/
 secrets.env
 
 node_modules
+/PGDATA

@@ -5,26 +5,38 @@ from __future__ import annotations
 
 from typing import List, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class AddOperator(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     owner: str
     operator: str
     token_id: str
 
 
 class UpdateOperatorsParameterItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     add_operator: AddOperator
 
 
 class RemoveOperator(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     owner: str
     operator: str
     token_id: str
 
 
 class UpdateOperatorsParameterItem1(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     remove_operator: RemoveOperator
 
 

@@ -6,8 +6,7 @@ import aiohttp
 from tortoise.query_utils import Q
 
 import hicdex.models as models
-from dipdup.utils import http_request
-from hicdex.utils import clean_null_bytes
+from hicdex.utils import clean_null_bytes, http_request
 
 METADATA_PATH = '/home/dipdup/metadata/tokens'
 SUBJKT_PATH = '/home/dipdup/metadata/subjkts'

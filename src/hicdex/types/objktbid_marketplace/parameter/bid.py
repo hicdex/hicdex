@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class BidParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     artist: str
     fa2: str
     objkt_id: str

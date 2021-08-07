@@ -3,15 +3,14 @@ import logging
 import os
 import re
 import subprocess
-from contextlib import suppress
 from copy import copy
-from os import mkdir
-from os.path import basename, dirname, exists, join, splitext
+from os.path import basename, dirname, exists, join, relpath, splitext
 from shutil import rmtree
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from jinja2 import Template
 
+from dipdup import __version__
 from dipdup.config import (
     CONFIGURE_HANDLER,
     ROLLBACK_HANDLER,
@@ -19,16 +18,31 @@ from dipdup.config import (
     ContractConfig,
     DatasourceConfigT,
     DipDupConfig,
+    IndexTemplateConfig,
     OperationHandlerOriginationPatternConfig,
     OperationHandlerTransactionPatternConfig,
     OperationIndexConfig,
-    StaticTemplateConfig,
     TzktDatasourceConfig,
 )
-from dipdup.datasources import DatasourceT
+from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils import pascal_to_snake, snake_to_pascal
+from dipdup.utils import import_submodules, mkdir_p, pascal_to_snake, snake_to_pascal, touch, write
+
+DEFAULT_DOCKER_ENV_FILE_CONTENT = dict(
+    POSTGRES_USER="dipdup",
+    POSTGRES_DB="dipdup",
+    POSTGRES_PASSWORD="changeme",
+    HASURA_GRAPHQL_DATABASE_URL="postgres://dipdup:changeme@db:5432/dipdup",
+    HASURA_GRAPHQL_ENABLE_CONSOLE="true",
+    HASURA_GRAPHQL_DEV_MODE="true",
+    HASURA_GRAPHQL_ENABLED_LOG_TYPES="startup, http-log, webhook-log, websocket-log, query-log",
+    HASURA_GRAPHQL_ADMIN_SECRET="changeme",
+    HASURA_GRAPHQL_UNAUTHORIZED_ROLE="user",
+)
+DEFAULT_DOCKER_IMAGE = 'dipdup/dipdup'
+DEFAULT_DOCKER_TAG = __version__
+DEFAULT_DOCKER_ENV_FILE = 'dipdup.env'
 
 
 def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
@@ -45,14 +59,34 @@ def resolve_big_maps(schema: Dict[str, Any]) -> Dict[str, Any]:
         return schema
 
 
+def load_template(name: str) -> Template:
+    """Load template from templates/{name}.j2"""
+    with open(join(dirname(__file__), 'templates', name + '.j2'), 'r') as f:
+        return Template(f.read())
+
+
 class DipDupCodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, DatasourceT]) -> None:
-        self._logger = logging.getLogger(__name__)
+    def __init__(self, config: DipDupConfig, datasources: Dict[DatasourceConfigT, Datasource]) -> None:
+        self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
         self._schemas: Dict[TzktDatasourceConfig, Dict[str, Dict[str, Any]]] = {}
+
+    async def init(self) -> None:
+        await self.create_package()
+        await self.fetch_schemas()
+        await self.generate_types()
+        await self.generate_default_handlers()
+        await self.generate_user_handlers()
+        await self.generate_jobs()
+        await self.cleanup()
+        await self.verify_package()
+
+    async def docker_init(self, image: str, tag: str, env_file: str) -> None:
+        await self.generate_docker(image, tag, env_file)
+        await self.verify_package()
 
     async def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -61,50 +95,37 @@ class DipDupCodeGenerator:
             package_path = self._config.package_path
         except ImportError:
             package_path = join(os.getcwd(), self._config.package)
-            mkdir(package_path)
-            with open(join(package_path, '__init__.py'), 'w'):
-                pass
+            touch(join(package_path, '__init__.py'))
 
         self._logger.info('Creating `%s.models` module', self._config.package)
         models_path = join(package_path, 'models.py')
         if not exists(models_path):
-            with open(join(dirname(__file__), 'templates', 'models.py.j2')) as file:
-                template = Template(file.read())
+            template = load_template('models.py')
             models_code = template.render()
-            with open(models_path, 'w') as file:
-                file.write(models_code)
+            write(models_path, models_code)
 
         self._logger.info('Creating `%s.handlers` package', self._config.package)
         handlers_path = join(self._config.package_path, 'handlers')
-        with suppress(FileExistsError):
-            mkdir(handlers_path)
-            with open(join(handlers_path, '__init__.py'), 'w'):
-                pass
+        touch(join(handlers_path, '__init__.py'))
 
         self._logger.info('Creating `%s.jobs` package', self._config.package)
         jobs_path = join(self._config.package_path, 'jobs')
-        with suppress(FileExistsError):
-            mkdir(jobs_path)
-            with open(join(jobs_path, '__init__.py'), 'w'):
-                pass
+        touch(join(jobs_path, '__init__.py'))
 
         self._logger.info('Creating `%s/sql` directory', self._config.package)
         sql_path = join(self._config.package_path, 'sql')
-        with suppress(FileExistsError):
-            mkdir(sql_path)
-        sql_on_restart_path = join(sql_path, 'on_restart')
-        with suppress(FileExistsError):
-            mkdir(sql_on_restart_path)
-        sql_on_reindex_path = join(sql_path, 'on_reindex')
-        with suppress(FileExistsError):
-            mkdir(sql_on_reindex_path)
+        touch(join(sql_path, 'on_restart', '.keep'))
+        touch(join(sql_path, 'on_reindex', '.keep'))
+
+        self._logger.info('Creating `%s/graphql` directory', self._config.package)
+        graphql_path = join(self._config.package_path, 'graphql')
+        touch(join(graphql_path, '.keep'))
 
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Creating `schemas` package')
         schemas_path = join(self._config.package_path, 'schemas')
-        with suppress(FileExistsError):
-            mkdir(schemas_path)
+        mkdir_p(schemas_path)
 
         for index_config in self._config.indexes.values():
 
@@ -122,46 +143,38 @@ class DipDupCodeGenerator:
                             contract_config = operation_pattern_config.contract_config
                             originated = bool(operation_pattern_config.source)
                         else:
+                            # NOTE: Operations without entrypoint are untyped
                             continue
 
                         self._logger.debug(contract_config)
                         contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, originated)
 
                         contract_schemas_path = join(schemas_path, contract_config.module_name)
-                        with suppress(FileExistsError):
-                            mkdir(contract_schemas_path)
+                        mkdir_p(contract_schemas_path)
 
                         storage_schema_path = join(contract_schemas_path, 'storage.json')
 
                         storage_schema = resolve_big_maps(contract_schemas['storageSchema'])
-                        if not exists(storage_schema_path):
-                            with open(storage_schema_path, 'w') as file:
-                                file.write(json.dumps(storage_schema, indent=4, sort_keys=True))
+                        write(storage_schema_path, json.dumps(storage_schema, indent=4, sort_keys=True))
 
                         if not isinstance(operation_pattern_config, OperationHandlerTransactionPatternConfig):
                             continue
 
                         parameter_schemas_path = join(contract_schemas_path, 'parameter')
-                        with suppress(FileExistsError):
-                            mkdir(parameter_schemas_path)
+                        entrypoint = cast(str, operation_pattern_config.entrypoint)
+                        mkdir_p(parameter_schemas_path)
 
                         try:
                             entrypoint_schema = next(
-                                ep['parameterSchema']
-                                for ep in contract_schemas['entrypoints']
-                                if ep['name'] == operation_pattern_config.entrypoint
+                                ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint
                             )
                         except StopIteration as e:
-                            raise ConfigurationError(
-                                f'Contract `{contract_config.address}` has no entrypoint `{operation_pattern_config.entrypoint}`'
-                            ) from e
+                            raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e
 
-                        entrypoint_schema_path = join(parameter_schemas_path, f'{operation_pattern_config.entrypoint}.json')
-
-                        if not exists(entrypoint_schema_path):
-                            with open(entrypoint_schema_path, 'w') as file:
-                                file.write(json.dumps(entrypoint_schema, indent=4))
-                        elif contract_config.typename is not None:
+                        entrypoint = entrypoint.replace('.', '_').lstrip('_')
+                        entrypoint_schema_path = join(parameter_schemas_path, f'{entrypoint}.json')
+                        written = write(entrypoint_schema_path, json.dumps(entrypoint_schema, indent=4))
+                        if not written and contract_config.typename is not None:
                             with open(entrypoint_schema_path, 'r') as file:
                                 existing_schema = json.loads(file.read())
                             if entrypoint_schema != existing_schema:
@@ -176,12 +189,9 @@ class DipDupCodeGenerator:
                     contract_schemas = await self._get_schema(index_config.datasource_config, contract_config, False)
 
                     contract_schemas_path = join(schemas_path, contract_config.module_name)
-                    with suppress(FileExistsError):
-                        mkdir(contract_schemas_path)
-
+                    mkdir_p(contract_schemas_path)
                     big_map_schemas_path = join(contract_schemas_path, 'big_map')
-                    with suppress(FileExistsError):
-                        mkdir(big_map_schemas_path)
+                    mkdir_p(big_map_schemas_path)
 
                     try:
                         big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == big_map_handler_config.path)
@@ -189,21 +199,16 @@ class DipDupCodeGenerator:
                         raise ConfigurationError(
                             f'Contract `{contract_config.address}` has no big map path `{big_map_handler_config.path}`'
                         ) from e
+                    big_map_path = big_map_handler_config.path.replace('.', '_')
                     big_map_key_schema = big_map_schema['keySchema']
-                    big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_handler_config.path}.key.json')
-
-                    if not exists(big_map_key_schema_path):
-                        with open(big_map_key_schema_path, 'w') as file:
-                            file.write(json.dumps(big_map_key_schema, indent=4))
+                    big_map_key_schema_path = join(big_map_schemas_path, f'{big_map_path}_key.json')
+                    write(big_map_key_schema_path, json.dumps(big_map_key_schema, indent=4))
 
                     big_map_value_schema = big_map_schema['valueSchema']
-                    big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_handler_config.path}.value.json')
+                    big_map_value_schema_path = join(big_map_schemas_path, f'{big_map_path}_value.json')
+                    write(big_map_value_schema_path, json.dumps(big_map_value_schema, indent=4))
 
-                    if not exists(big_map_value_schema_path):
-                        with open(big_map_value_schema_path, 'w') as file:
-                            file.write(json.dumps(big_map_value_schema, indent=4))
-
-            elif isinstance(index_config, StaticTemplateConfig):
+            elif isinstance(index_config, IndexTemplateConfig):
                 raise RuntimeError('Config is not pre-initialized')
 
             else:
@@ -215,20 +220,14 @@ class DipDupCodeGenerator:
         types_path = join(self._config.package_path, 'types')
 
         self._logger.info('Creating `types` package')
-        with suppress(FileExistsError):
-            mkdir(types_path)
-            with open(join(types_path, '__init__.py'), 'w'):
-                pass
+        touch(join(types_path, '__init__.py'))
 
         for root, dirs, files in os.walk(schemas_path):
             types_root = root.replace(schemas_path, types_path)
 
             for dir in dirs:
                 dir_path = join(types_root, dir)
-                with suppress(FileExistsError):
-                    os.mkdir(dir_path)
-                    with open(join(dir_path, '__init__.py'), 'w'):
-                        pass
+                touch(join(dir_path, '__init__.py'))
 
             for file in files:
                 name, ext = splitext(basename(file))
@@ -238,10 +237,12 @@ class DipDupCodeGenerator:
                 input_path = join(root, file)
                 output_path = join(types_root, f'{pascal_to_snake(name)}.py')
 
+                # NOTE: Skip if the first line starts with "# dipdup: ignore"
                 if exists(output_path):
                     with open(output_path) as type_file:
                         first_line = type_file.readline()
                         if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
+                            self._logger.info('Skipping `%s`', output_path)
                             continue
 
                 if name == 'storage':
@@ -258,7 +259,7 @@ class DipDupCodeGenerator:
                     '--output',
                     output_path,
                     '--class-name',
-                    name,
+                    name.lstrip('_'),
                     '--disable-timestamp',
                     '--use-default',
                 ]
@@ -267,32 +268,18 @@ class DipDupCodeGenerator:
 
     async def generate_default_handlers(self, recreate=False) -> None:
         handlers_path = join(self._config.package_path, 'handlers')
-        with open(join(dirname(__file__), 'templates', f'{ROLLBACK_HANDLER}.py.j2')) as file:
-            rollback_template = Template(file.read())
-        with open(join(dirname(__file__), 'templates', f'{CONFIGURE_HANDLER}.py.j2')) as file:
-            configure_template = Template(file.read())
-
-        self._logger.info('Generating handler `%s`', CONFIGURE_HANDLER)
-        handler_code = configure_template.render()
-        handler_path = join(handlers_path, f'{CONFIGURE_HANDLER}.py')
-        if not exists(handler_path) or recreate:
-            with open(handler_path, 'w') as file:
-                file.write(handler_code)
-
-        self._logger.info('Generating handler `%s`', ROLLBACK_HANDLER)
-        handler_code = rollback_template.render()
-        handler_path = join(handlers_path, f'{ROLLBACK_HANDLER}.py')
-        if not exists(handler_path) or recreate:
-            with open(handler_path, 'w') as file:
-                file.write(handler_code)
+        for handler_name in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
+            self._logger.info('Generating handler `%s`', handler_name)
+            template = load_template(f'handlers/{handler_name}.py')
+            handler_code = template.render()
+            handler_path = join(handlers_path, f'{handler_name}.py')
+            write(handler_path, handler_code, overwrite=recreate)
 
     async def generate_user_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
         handlers_path = join(self._config.package_path, 'handlers')
-        with open(join(dirname(__file__), 'templates', 'operation_handler.py.j2')) as file:
-            operation_handler_template = Template(file.read())
-        with open(join(dirname(__file__), 'templates', 'big_map_handler.py.j2')) as file:
-            big_map_handler_template = Template(file.read())
+        operation_handler_template = load_template('handlers/operation.py')
+        big_map_handler_template = load_template('handlers/big_map.py')
 
         for index_config in self._config.indexes.values():
             if isinstance(index_config, OperationIndexConfig):
@@ -306,9 +293,7 @@ class DipDupCodeGenerator:
                         pascal_to_snake=pascal_to_snake,
                     )
                     handler_path = join(handlers_path, f'{handler_config.callback}.py')
-                    if not exists(handler_path):
-                        with open(handler_path, 'w') as file:
-                            file.write(handler_code)
+                    write(handler_path, handler_code)
 
             elif isinstance(index_config, BigMapIndexConfig):
                 for big_map_handler_config in index_config.handlers:
@@ -322,9 +307,7 @@ class DipDupCodeGenerator:
                         pascal_to_snake=pascal_to_snake,
                     )
                     handler_path = join(handlers_path, f'{big_map_handler_config.callback}.py')
-                    if not exists(handler_path):
-                        with open(handler_path, 'w') as file:
-                            file.write(handler_code)
+                    write(handler_path, handler_code)
 
             else:
                 raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -334,23 +317,70 @@ class DipDupCodeGenerator:
             return
 
         jobs_path = join(self._config.package_path, 'jobs')
-        with open(join(dirname(__file__), 'templates', 'job.py.j2')) as file:
-            job_template = Template(file.read())
+        job_template = load_template('jobs/job.py')
 
         job_callbacks = set(job_config.callback for job_config in self._config.jobs.values())
         for job_callback in job_callbacks:
             self._logger.info('Generating job `%s`', job_callback)
             job_code = job_template.render(job=job_callback)
             job_path = join(jobs_path, f'{job_callback}.py')
-            if not exists(job_path):
-                with open(job_path, 'w') as file:
-                    file.write(job_code)
+            write(job_path, job_code)
+
+    async def generate_docker(self, image: str, tag: str, env_file: str) -> None:
+        self._logger.info('Generating Docker template')
+        docker_path = join(self._config.package_path, 'docker')
+        mkdir_p(docker_path)
+
+        dockerfile_template = load_template('docker/Dockerfile')
+        docker_compose_template = load_template('docker/docker-compose.yml')
+        dipdup_env_template = load_template('docker/dipdup.env')
+
+        dockerfile_code = dockerfile_template.render(
+            image=f'{image}:{tag}',
+            package=self._config.package,
+            package_path=self._config.package_path,
+        )
+        write(join(docker_path, 'Dockerfile'), dockerfile_code, overwrite=True)
+
+        mounts = {}
+        for filename in self._config.filenames:
+            filename_part = filename.split("/")[-1]
+            from_ = join(relpath(self._config.package_path, filename), filename_part)
+            to = f'/home/dipdup/{filename_part}'
+            mounts[from_] = to
+
+        command = []
+        for filename in self._config.filenames:
+            command += ['-c', filename.split("/")[-1]]
+        command += ['run']
+
+        docker_compose_code = docker_compose_template.render(
+            package=self._config.package,
+            mounts=mounts,
+            env_file=env_file,
+            command=command,
+        )
+        write(join(docker_path, 'docker-compose.yml'), docker_compose_code, overwrite=True)
+
+        dipdup_env_code = dipdup_env_template.render(
+            environment={
+                **DEFAULT_DOCKER_ENV_FILE_CONTENT,
+                **self._config.environment,
+            }
+        )
+        write(join(docker_path, 'dipdup.env.example'), dipdup_env_code, overwrite=True)
+        write(join(docker_path, 'dipdup.env'), dipdup_env_code, overwrite=False)
+
+        write(join(docker_path, '.gitignore'), '*.env')
 
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""
         self._logger.info('Cleaning up')
         schemas_path = join(self._config.package_path, 'schemas')
         rmtree(schemas_path)
+
+    async def verify_package(self) -> None:
+        import_submodules(self._config.package)
 
     async def _get_schema(
         self,
@@ -369,7 +399,10 @@ class DipDupCodeGenerator:
             self._schemas[datasource_config] = {}
         if address not in self._schemas[datasource_config]:
             if originated:
-                address = (await datasource.get_originated_contracts(address))[0]
+                try:
+                    address = (await datasource.get_originated_contracts(address))[0]
+                except IndexError as e:
+                    raise ConfigurationError(f'No contracts were originated from `{address}`') from e
                 self._logger.info('Fetching schemas for contract `%s` (originated from `%s`)', address, contract_config.address)
             else:
                 self._logger.info('Fetching schemas for contract `%s`', address)

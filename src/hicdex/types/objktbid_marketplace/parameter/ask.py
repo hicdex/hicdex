@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class AskParameter(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     amount: str
     artist: str
     fa2: str

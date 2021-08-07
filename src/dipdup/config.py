@@ -10,7 +10,7 @@ from collections import defaultdict
 from enum import Enum
 from os import environ as env
 from os.path import dirname
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Type, Union, cast
 from urllib.parse import urlparse
 
 from pydantic import Field, validator
@@ -19,8 +19,8 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 from typing_extensions import Literal
 
-from dipdup.exceptions import ConfigurationError, HandlerImportError
-from dipdup.utils import pascal_to_snake, snake_to_pascal
+from dipdup.exceptions import ConfigurationError
+from dipdup.utils import import_from, pascal_to_snake, snake_to_pascal
 
 ROLLBACK_HANDLER = 'on_rollback'
 CONFIGURE_HANDLER = 'on_configure'
@@ -30,12 +30,13 @@ DEFAULT_RETRY_COUNT = 3
 DEFAULT_RETRY_SLEEP = 1
 
 sys.path.append(os.getcwd())
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('dipdup.config')
 
 
 class OperationType(Enum):
     transaction = 'transaction'
     origination = 'origination'
+    migration = 'migration'
 
 
 @dataclass
@@ -90,10 +91,44 @@ class PostgresDatabaseConfig:
 
 
 @dataclass
-class ContractConfig:
+class HTTPConfig:
+    cache: Optional[bool] = None
+    retry_count: Optional[int] = None
+    retry_sleep: Optional[float] = None
+    retry_multiplier: Optional[float] = None
+    ratelimit_rate: Optional[int] = None
+    ratelimit_period: Optional[int] = None
+    connection_limit: Optional[int] = None
+    batch_size: Optional[int] = None
+
+    def merge(self, other: Optional['HTTPConfig']) -> None:
+        if not other:
+            return
+        for k, v in other.__dict__.items():
+            if v is not None:
+                setattr(self, k, v)
+
+
+@dataclass
+class NameMixin:
+    def __post_init_post_parse__(self) -> None:
+        self._name: Optional[str] = None
+
+    @property
+    def name(self) -> str:
+        if self._name is None:
+            raise RuntimeError('Config is not pre-initialized')
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        self._name = name
+
+
+@dataclass
+class ContractConfig(NameMixin):
     """Contract config
 
-    :param network: Corresponding network alias, only for sanity checks
     :param address: Contract address
     :param typename: User-defined alias for the contract script
     """
@@ -117,22 +152,6 @@ class ContractConfig:
 
 
 @dataclass
-class NameMixin:
-    def __post_init_post_parse__(self) -> None:
-        self._name: Optional[str] = None
-
-    @property
-    def name(self) -> str:
-        if self._name is None:
-            raise RuntimeError('Config is not pre-initialized')
-        return self._name
-
-    @name.setter
-    def name(self, name: str) -> None:
-        self._name = name
-
-
-@dataclass
 class TzktDatasourceConfig(NameMixin):
     """TzKT datasource config
 
@@ -141,20 +160,18 @@ class TzktDatasourceConfig(NameMixin):
 
     kind: Literal['tzkt']
     url: str
-
-    cache: Optional[bool] = None
-    retry_count: int = DEFAULT_RETRY_COUNT
-    retry_sleep: int = DEFAULT_RETRY_SLEEP
+    http: Optional[HTTPConfig] = None
 
     def __hash__(self):
         return hash(self.url)
 
-    @validator('url', allow_reuse=True)
-    def valid_url(cls, v):
-        parsed_url = urlparse(v)
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        if self.http and self.http.batch_size and self.http.batch_size > 10000:
+            raise ConfigurationError('`batch_size` must be less than 10000')
+        parsed_url = urlparse(self.url)
         if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{v}` is not a valid datasource URL')
-        return v
+            raise ConfigurationError(f'`{self.url}` is not a valid datasource URL')
 
 
 @dataclass
@@ -167,10 +184,7 @@ class BcdDatasourceConfig(NameMixin):
     kind: Literal['bcd']
     url: str
     network: str
-
-    cache: Optional[bool] = None
-    retry_count: int = DEFAULT_RETRY_COUNT
-    retry_sleep: int = DEFAULT_RETRY_SLEEP
+    http: Optional[HTTPConfig] = None
 
     def __hash__(self):
         return hash(self.url + self.network)
@@ -189,10 +203,7 @@ class CoinbaseDatasourceConfig(NameMixin):
     api_key: Optional[str] = None
     secret_key: Optional[str] = None
     passphrase: Optional[str] = None
-
-    cache: Optional[bool] = None
-    retry_count: int = DEFAULT_RETRY_COUNT
-    retry_sleep: int = DEFAULT_RETRY_SLEEP
+    http: Optional[HTTPConfig] = None
 
     def __hash__(self):
         return hash(self.kind)
@@ -220,6 +231,7 @@ class PatternConfig(ABC):
 
     @classmethod
     def format_parameter_import(cls, package: str, module_name: str, entrypoint: str) -> str:
+        entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         return f'from {package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)} import {parameter_cls}'
 
@@ -232,6 +244,7 @@ class PatternConfig(ABC):
 
     @classmethod
     def format_operation_argument(cls, module_name: str, entrypoint: str, optional: bool) -> str:
+        entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(entrypoint)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
@@ -264,12 +277,27 @@ class StorageTypeMixin:
 
     def initialize_storage_cls(self, package: str, module_name: str) -> None:
         _logger.info('Registering `%s` storage type', module_name)
-        storage_type_module = importlib.import_module(f'{package}.types.{module_name}.storage')
-        storage_type_cls = getattr(
-            storage_type_module,
-            snake_to_pascal(module_name) + 'Storage',
-        )
-        self.storage_type_cls = storage_type_cls
+        cls_name = snake_to_pascal(module_name) + 'Storage'
+        module_name = f'{package}.types.{module_name}.storage'
+        self.storage_type_cls = import_from(module_name, cls_name)
+
+
+@dataclass
+class ParentMixin:
+    """`parent` field for index and template configs"""
+
+    def __post_init_post_parse__(self):
+        self._parent: Optional['IndexConfig'] = None
+
+    @property
+    def parent(self) -> Optional['IndexConfig']:
+        return self._parent
+
+    @parent.setter
+    def parent(self, config: 'IndexConfig') -> None:
+        if self._parent:
+            raise RuntimeError('Can\'t unset parent once set')
+        self._parent = config
 
 
 @dataclass
@@ -291,9 +319,9 @@ class ParameterTypeMixin:
 
     def initialize_parameter_cls(self, package: str, module_name: str, entrypoint: str) -> None:
         _logger.info('Registering parameter type for entrypoint `%s`', entrypoint)
-        parameter_type_module = importlib.import_module(f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}')
-        parameter_type_cls = getattr(parameter_type_module, snake_to_pascal(entrypoint) + 'Parameter')
-        self.parameter_type_cls = parameter_type_cls
+        module_name = f'{package}.types.{module_name}.parameter.{pascal_to_snake(entrypoint)}'
+        cls_name = snake_to_pascal(entrypoint) + 'Parameter'
+        self.parameter_type_cls = import_from(module_name, cls_name)
 
 
 @dataclass
@@ -446,10 +474,11 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin):
 
 
 @dataclass
-class HandlerConfig:
+class HandlerConfig(NameMixin):
     callback: str
 
     def __post_init_post_parse__(self):
+        super().__post_init_post_parse__()
         self._callback_fn = None
         if self.callback in (ROLLBACK_HANDLER, CONFIGURE_HANDLER):
             raise ConfigurationError(f'`{self.callback}` callback name is reserved')
@@ -484,10 +513,10 @@ class OperationHandlerConfig(HandlerConfig):
 @dataclass
 class TemplateValuesMixin:
     def __post_init_post_parse__(self) -> None:
-        self._template_values: Optional[Dict[str, str]] = None
+        self._template_values: Dict[str, str] = {}
 
     @property
-    def template_values(self) -> Optional[Dict[str, str]]:
+    def template_values(self) -> Dict[str, str]:
         return self._template_values
 
     @template_values.setter
@@ -496,20 +525,18 @@ class TemplateValuesMixin:
 
 
 @dataclass
-class IndexConfig(TemplateValuesMixin, NameMixin):
+class IndexConfig(TemplateValuesMixin, NameMixin, ParentMixin):
     datasource: Union[str, TzktDatasourceConfig]
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
+        ParentMixin.__post_init_post_parse__(self)
 
     def hash(self) -> str:
-        return hashlib.sha256(
-            json.dumps(
-                self,
-                default=pydantic_encoder,
-            ).encode(),
-        ).hexdigest()
+        config_json = json.dumps(self, default=pydantic_encoder)
+        config_hash = hashlib.sha256(config_json.encode()).hexdigest()
+        return config_hash
 
     @property
     def datasource_config(self) -> TzktDatasourceConfig:
@@ -522,10 +549,11 @@ class IndexConfig(TemplateValuesMixin, NameMixin):
 class OperationIndexConfig(IndexConfig):
     """Operation index config
 
-    :param datasource: Alias of datasource in `datasources` block
-    :param contract: Alias of contract to fetch operations for
-    :param first_block: First block to process
-    :param last_block: Last block to process
+    :param datasource: Alias of index datasource in `datasources` section
+    :param contracts: Aliases of contracts being indexed in `contracts` section
+    :param stateless: Makes index dynamic. DipDup will synchronize index from the first block on every run
+    :param first_block: First block to process (use with `--oneshot` run argument)
+    :param last_block: Last block to process (use with `--oneshot` run argument)
     :param handlers: List of indexer handlers
     """
 
@@ -546,6 +574,15 @@ class OperationIndexConfig(IndexConfig):
             if not isinstance(contract, ContractConfig):
                 raise RuntimeError('Config is not initialized')
         return cast(List[ContractConfig], self.contracts)
+
+    @property
+    def entrypoints(self) -> Set[str]:
+        entrypoints = set()
+        for handler in self.handlers:
+            for pattern in handler.pattern:
+                if isinstance(pattern, OperationHandlerTransactionPatternConfig) and pattern.entrypoint:
+                    entrypoints.add(pattern.entrypoint)
+        return entrypoints
 
 
 @dataclass
@@ -595,34 +632,20 @@ class BigMapIndexConfig(IndexConfig):
     first_block: int = 0
     last_block: int = 0
 
-
-@dataclass
-class BlockHandlerConfig(HandlerConfig):
-    pattern = None
-
-
-@dataclass
-class BlockIndexConfig(IndexConfig):
-    """Stub, not implemented"""
-
-    kind: Literal['block']
-    datasource: Union[str, TzktDatasourceConfig]
-    handlers: List[BlockHandlerConfig]
-
-    stateless: bool = False
-    first_block: int = 0
-    last_block: int = 0
+    @property
+    def contracts(self) -> List[ContractConfig]:
+        return list(set([cast(ContractConfig, handler_config.contract) for handler_config in self.handlers]))
 
 
 @dataclass
-class StaticTemplateConfig:
+class IndexTemplateConfig(ParentMixin):
     kind = 'template'
     template: str
     values: Dict[str, str]
 
 
-IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig, StaticTemplateConfig]
-IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig, BlockIndexConfig]
+IndexConfigT = Union[OperationIndexConfig, BigMapIndexConfig, IndexTemplateConfig]
+IndexConfigTemplateT = Union[OperationIndexConfig, BigMapIndexConfig]
 HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, OperationHandlerTransactionPatternConfig]
 
 
@@ -630,25 +653,51 @@ HandlerPatternConfigT = Union[OperationHandlerOriginationPatternConfig, Operatio
 class HasuraConfig:
     url: str
     admin_secret: Optional[str] = None
+    source: str = 'default'
+    select_limit: int = 100
+    allow_aggregations: bool = True
+    camel_case: bool = False
+    connection_timeout: int = 5
+    rest: bool = True
+    http: Optional[HTTPConfig] = None
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):
         parsed_url = urlparse(v)
         if not (parsed_url.scheme and parsed_url.netloc):
             raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
-        return v
+        return v.rstrip('/')
+
+    @validator('source', allow_reuse=True)
+    def valid_source(cls, v):
+        if v != 'default':
+            raise NotImplementedError('Multiple Hasura sources are not supported at the moment')
+
+    @property
+    def headers(self) -> Dict[str, str]:
+        if self.admin_secret:
+            return {'X-Hasura-Admin-Secret': self.admin_secret}
+        return {}
 
 
 @dataclass
 class JobConfig(HandlerConfig):
-    crontab: str
+    crontab: Optional[str] = None
+    interval: Optional[int] = None
     args: Optional[Dict[str, Any]] = None
     atomic: bool = False
+
+    def __post_init_post_parse__(self):
+        if int(bool(self.crontab)) + int(bool(self.interval)) != 1:
+            raise ConfigurationError('Either `interval` or `crontab` field must be specified')
+        super().__post_init_post_parse__()
 
 
 @dataclass
 class SentryConfig:
     dsn: str
+    environment: Optional[str] = None
+    debug: bool = False
 
 
 @dataclass
@@ -670,39 +719,50 @@ class DipDupConfig:
     spec_version: str
     package: str
     datasources: Dict[str, DatasourceConfigT]
+    database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
     contracts: Dict[str, ContractConfig] = Field(default_factory=dict)
     indexes: Dict[str, IndexConfigT] = Field(default_factory=dict)
-    templates: Optional[Dict[str, IndexConfigTemplateT]] = None
-    database: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = SqliteDatabaseConfig(kind='sqlite')
+    templates: Dict[str, IndexConfigTemplateT] = Field(default_factory=dict)
+    jobs: Dict[str, JobConfig] = Field(default_factory=dict)
     hasura: Optional[HasuraConfig] = None
-    jobs: Optional[Dict[str, JobConfig]] = None
     sentry: Optional[SentryConfig] = None
 
     def __post_init_post_parse__(self):
+        self._filenames: List[str] = []
+        self._environment: Dict[str, str] = {}
         self._callback_patterns: Dict[str, List[Sequence[HandlerPatternConfigT]]] = defaultdict(list)
         self._pre_initialized = []
         self._initialized = []
         self.validate()
+
+    @property
+    def environment(self) -> Dict[str, str]:
+        return self._environment
+
+    @property
+    def filenames(self) -> List[str]:
+        return self._filenames
 
     def validate(self) -> None:
         if isinstance(self.database, SqliteDatabaseConfig) and self.hasura:
             raise ConfigurationError('SQLite DB engine is not supported by Hasura')
 
     def get_contract(self, name: str) -> ContractConfig:
+        self._check_name(name)
         try:
             return self.contracts[name]
         except KeyError as e:
             raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
 
     def get_datasource(self, name: str) -> DatasourceConfigT:
+        self._check_name(name)
         try:
             return self.datasources[name]
         except KeyError as e:
             raise ConfigurationError(f'Datasource `{name}` not found in `datasources` config section') from e
 
     def get_template(self, name: str) -> IndexConfigTemplateT:
-        if not self.templates:
-            raise ConfigurationError('`templates` section is missing')
+        self._check_name(name)
         try:
             return self.templates[name]
         except KeyError as e:
@@ -715,23 +775,19 @@ class DipDupConfig:
         return datasource
 
     def get_rollback_fn(self) -> Type:
-        try:
-            module = f'{self.package}.handlers.{ROLLBACK_HANDLER}'
-            return getattr(importlib.import_module(module), ROLLBACK_HANDLER)
-        except (ModuleNotFoundError, AttributeError) as e:
-            raise HandlerImportError(f'Module `{module}` not found. Have you forgot to call `init`?') from e
+        module_name = f'{self.package}.handlers.{ROLLBACK_HANDLER}'
+        fn_name = ROLLBACK_HANDLER
+        return import_from(module_name, fn_name)
 
     def get_configure_fn(self) -> Type:
-        try:
-            module = f'{self.package}.handlers.{CONFIGURE_HANDLER}'
-            return getattr(importlib.import_module(module), CONFIGURE_HANDLER)
-        except (ModuleNotFoundError, AttributeError) as e:
-            raise HandlerImportError(f'Module `{module}` not found. Have you forgot to call `init`?') from e
+        module_name = f'{self.package}.handlers.{CONFIGURE_HANDLER}'
+        fn_name = CONFIGURE_HANDLER
+        return import_from(module_name, fn_name)
 
-    def resolve_static_templates(self) -> None:
+    def resolve_index_templates(self) -> None:
         _logger.info('Substituting index templates')
         for index_name, index_config in self.indexes.items():
-            if isinstance(index_config, StaticTemplateConfig):
+            if isinstance(index_config, IndexTemplateConfig):
                 template = self.get_template(index_config.template)
                 raw_template = json.dumps(template, default=pydantic_encoder)
                 for key, value in index_config.values.items():
@@ -740,7 +796,13 @@ class DipDupConfig:
                 json_template = json.loads(raw_template)
                 new_index_config = template.__class__(**json_template)
                 new_index_config.template_values = index_config.values
+                new_index_config.parent = index_config.parent
                 self.indexes[index_name] = new_index_config
+
+    def _check_name(self, name: str) -> None:
+        variable = name.split('<')[-1].split('>')[0]
+        if variable != name:
+            raise ConfigurationError(f'`{variable}` variable of index template is not set')
 
     def _pre_initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         """Resolve contract and datasource configs by aliases"""
@@ -757,10 +819,10 @@ class DipDupConfig:
                     if isinstance(contract, str):
                         index_config.contracts[i] = self.get_contract(contract)
 
-            transaction_id = 0
             for handler_config in index_config.handlers:
                 self._callback_patterns[handler_config.callback].append(handler_config.pattern)
                 for pattern_config in handler_config.pattern:
+                    transaction_id = 0
                     if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
                             pattern_config.destination = self.get_contract(pattern_config.destination)
@@ -795,10 +857,14 @@ class DipDupConfig:
         self._pre_initialized.append(index_name)
 
     def pre_initialize(self) -> None:
-        for name, config in self.datasources.items():
-            config.name = name
+        for name, contract_config in self.contracts.items():
+            contract_config.name = name
+        for name, datasource_config in self.datasources.items():
+            datasource_config.name = name
+        for name, job_config in self.jobs.items():
+            job_config.name = name
 
-        self.resolve_static_templates()
+        self.resolve_index_templates()
         for index_name, index_config in self.indexes.items():
             self._pre_initialize_index(index_name, index_config)
 
@@ -841,6 +907,7 @@ class DipDupConfig:
         current_workdir = os.path.join(os.getcwd())
 
         json_config: Dict[str, Any] = {}
+        config_environment: Dict[str, str] = {}
         for filename in filenames:
             filename = os.path.join(current_workdir, filename)
 
@@ -851,6 +918,7 @@ class DipDupConfig:
             _logger.info('Substituting environment variables')
             for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
                 variable, default_value = match.group(1), match.group(2)
+                config_environment[variable] = default_value
                 value = env.get(variable)
                 if not default_value and not value:
                     raise ConfigurationError(f'Environment variable `{variable}` is not set')
@@ -862,26 +930,31 @@ class DipDupConfig:
                 **YAML(typ='base').load(raw_config),
             }
 
-        config = cls(**json_config)
+        try:
+            config = cls(**json_config)
+            config._environment = config_environment
+            config._filenames = filenames
+        except Exception as e:
+            raise ConfigurationError(str(e)) from e
         return config
 
     def _initialize_handler_callback(self, handler_config: HandlerConfig) -> None:
         _logger.info('Registering handler callback `%s`', handler_config.callback)
-        handler_module = importlib.import_module(f'{self.package}.handlers.{handler_config.callback}')
-        callback_fn = getattr(handler_module, handler_config.callback)
-        handler_config.callback_fn = callback_fn
+        module_name = f'{self.package}.handlers.{handler_config.callback}'
+        fn_name = handler_config.callback
+        handler_config.callback_fn = import_from(module_name, fn_name)
 
     def _initialize_job_callback(self, job_config: JobConfig) -> None:
         _logger.info('Registering job callback `%s`', job_config.callback)
-        job_module = importlib.import_module(f'{self.package}.jobs.{job_config.callback}')
-        callback_fn = getattr(job_module, job_config.callback)
-        job_config.callback_fn = callback_fn
+        module_name = f'{self.package}.jobs.{job_config.callback}'
+        fn_name = job_config.callback
+        job_config.callback_fn = import_from(module_name, fn_name)
 
     def _initialize_index(self, index_name: str, index_config: IndexConfigT) -> None:
         if index_name in self._initialized:
             return
 
-        if isinstance(index_config, StaticTemplateConfig):
+        if isinstance(index_config, IndexTemplateConfig):
             raise RuntimeError('Config is not pre-initialized')
 
         if isinstance(index_config, OperationIndexConfig):
@@ -909,24 +982,15 @@ class DipDupConfig:
                 self._initialize_handler_callback(big_map_handler_config)
 
                 _logger.info('Registering big map types for path `%s`', big_map_handler_config.path)
-                key_type_module = importlib.import_module(
-                    f'{self.package}'
-                    f'.types'
-                    f'.{big_map_handler_config.contract_config.module_name}'
-                    f'.big_map'
-                    f'.{pascal_to_snake(big_map_handler_config.path)}_key'
-                )
-                key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_handler_config.path + '_key'))
+                module_name = big_map_handler_config.contract_config.module_name
+                big_map_path = pascal_to_snake(big_map_handler_config.path.replace('.', '_'))
+
+                key_type_module = importlib.import_module(f'{self.package}.types.{module_name}.big_map.{big_map_path}_key')
+                key_type_cls = getattr(key_type_module, snake_to_pascal(big_map_path + '_key'))
                 big_map_handler_config.key_type_cls = key_type_cls
 
-                value_type_module = importlib.import_module(
-                    f'{self.package}'
-                    f'.types'
-                    f'.{big_map_handler_config.contract_config.module_name}'
-                    f'.big_map'
-                    f'.{pascal_to_snake(big_map_handler_config.path)}_value'
-                )
-                value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_handler_config.path + '_value'))
+                value_type_module = importlib.import_module(f'{self.package}.types.{module_name}.big_map.{big_map_path}_value')
+                value_type_cls = getattr(value_type_module, snake_to_pascal(big_map_path + '_value'))
                 big_map_handler_config.value_type_cls = value_type_cls
 
         else:

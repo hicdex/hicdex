@@ -1,20 +1,22 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from dipdup.datasources.proxy import DatasourceRequestProxy
+from dipdup.config import HTTPConfig
+from dipdup.datasources.datasource import Datasource
 
-Address = str
+TOKENS_REQUEST_LIMIT = 10
 
 
-class BcdDatasource:
-    def __init__(self, url: str, network: str, proxy=DatasourceRequestProxy()) -> None:
-        self._url = url.rstrip('/')
-        self._network = network
-        self._proxy = proxy
+class BcdDatasource(Datasource):
+    def __init__(
+        self,
+        url: str,
+        network: str,
+        http_config: Optional[HTTPConfig] = None,
+    ) -> None:
+        super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.bcd')
-
-    async def close_session(self) -> None:
-        await self._proxy.close_session()
+        self._network = network
 
     async def run(self) -> None:
         pass
@@ -22,8 +24,34 @@ class BcdDatasource:
     async def resync(self) -> None:
         pass
 
-    async def get_tokens(self, address: Address) -> List[Dict[str, Any]]:
-        return await self._proxy.http_request(
+    async def get_tokens(self, address: str) -> List[Dict[str, Any]]:
+        tokens, offset = [], 0
+        while True:
+            tokens_batch = await self._http.request(
+                'get',
+                url=f'v1/contract/{self._network}/{address}/tokens?offset={offset}',
+            )
+            tokens += tokens_batch
+            offset += TOKENS_REQUEST_LIMIT
+            if len(tokens_batch) < TOKENS_REQUEST_LIMIT:
+                break
+        return tokens
+
+    async def get_token(self, address: str, token_id: int) -> Optional[Dict[str, Any]]:
+        response = await self._http.request(
             'get',
-            url=f'{self._url}/v1/contract/{self._network}/{address}/tokens',
+            url=f'v1/contract/{self._network}/{address}/tokens?token_id={token_id}',
+        )
+        if response:
+            return response[0]
+        return None
+
+    def _default_http_config(self) -> HTTPConfig:
+        return HTTPConfig(
+            cache=True,
+            retry_sleep=1,
+            retry_multiplier=1.1,
+            ratelimit_rate=100,
+            ratelimit_period=30,
+            connection_limit=25,
         )

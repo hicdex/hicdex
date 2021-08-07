@@ -5,15 +5,21 @@ from __future__ import annotations
 
 from typing import Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class Curations(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     hDAO_balance: str
     issuer: str
 
 
 class HdaoCurationStorage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     curations: Dict[str, Curations]
     fa2: str
     locked: bool

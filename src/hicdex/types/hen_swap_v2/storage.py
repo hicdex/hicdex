@@ -5,10 +5,13 @@ from __future__ import annotations
 
 from typing import Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class Swaps(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     creator: str
     issuer: str
     objkt_amount: str
@@ -18,6 +21,9 @@ class Swaps(BaseModel):
 
 
 class HenSwapV2Storage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     counter: str
     fee: str
     manager: str

@@ -1,26 +1,30 @@
 import os
 import sys
+from pprint import pformat
 from typing import Any, Dict, Optional
 
 from tortoise import Tortoise
 from tortoise.transactions import in_transaction
 
-from dipdup.config import ContractConfig, DipDupConfig, PostgresDatabaseConfig, StaticTemplateConfig
-from dipdup.datasources import DatasourceT
-from dipdup.exceptions import ConfigurationError
+from dipdup.config import ContractConfig, DipDupConfig, IndexConfig, IndexTemplateConfig, PostgresDatabaseConfig
+from dipdup.datasources.datasource import Datasource
+from dipdup.exceptions import ConfigurationError, ContractAlreadyExistsError, IndexAlreadyExistsError
 from dipdup.utils import FormattedLogger
 
 
-# TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic in HandlerContext.
+# TODO: Dataclasses are cool, everyone loves them. Resolve issue with pydantic serialization.
 class DipDupContext:
     def __init__(
         self,
-        datasources: Dict[str, DatasourceT],
+        datasources: Dict[str, Datasource],
         config: DipDupConfig,
     ) -> None:
         self.datasources = datasources
         self.config = config
         self._updated: bool = False
+
+    def __str__(self) -> str:
+        return pformat(self.__dict__)
 
     def commit(self) -> None:
         """Spawn indexes after handler execution"""
@@ -65,25 +69,39 @@ class DipDupContext:
         await self.restart()
 
 
+class TemplateValuesDict(dict):
+    def __init__(self, ctx, **kwargs):
+        self.ctx = ctx
+        super().__init__(**kwargs)
+
+    def __getitem__(self, key):
+        try:
+            return dict.__getitem__(self, key)
+        except KeyError as e:
+            raise ConfigurationError(f'Index `{self.ctx.index_config.name}` requires `{key}` template value to be set') from e
+
+
 class HandlerContext(DipDupContext):
     """Common handler context."""
 
     def __init__(
         self,
-        datasources: Dict[str, DatasourceT],
+        datasources: Dict[str, Datasource],
         config: DipDupConfig,
         logger: FormattedLogger,
-        template_values: Optional[Dict[str, str]],
-        datasource: DatasourceT,
+        template_values: Dict[str, str],
+        datasource: Datasource,
+        index_config: IndexConfig,
     ) -> None:
         super().__init__(datasources, config)
         self.logger = logger
-        self.template_values = template_values
+        self.template_values = TemplateValuesDict(self, **template_values)
         self.datasource = datasource
+        self.index_config = index_config
 
     def add_contract(self, name: str, address: str, typename: Optional[str] = None) -> None:
         if name in self.config.contracts:
-            raise ConfigurationError(f'Contract `{name}` is already exists')
+            raise ContractAlreadyExistsError(self, name, address)
         self.config.contracts[name] = ContractConfig(
             address=address,
             typename=typename,
@@ -92,27 +110,44 @@ class HandlerContext(DipDupContext):
 
     def add_index(self, name: str, template: str, values: Dict[str, Any]) -> None:
         if name in self.config.indexes:
-            raise ConfigurationError(f'Index `{name}` is already exists')
+            raise IndexAlreadyExistsError(self, name)
         self.config.get_template(template)
-        self.config.indexes[name] = StaticTemplateConfig(
+        self.config.indexes[name] = IndexTemplateConfig(
             template=template,
             values=values,
         )
+        # NOTE: Notify datasource to subscribe to operations by entrypoint if enabled in index config
+        self.config.indexes[name].parent = self.index_config
         self._updated = True
 
 
-class RollbackHandlerContext(HandlerContext):
-    template_values: None
+class JobContext(DipDupContext):
+    """Job handler context."""
 
     def __init__(
         self,
-        datasources: Dict[str, DatasourceT],
+        datasources: Dict[str, Datasource],
         config: DipDupConfig,
         logger: FormattedLogger,
-        datasource: DatasourceT,
+    ) -> None:
+        super().__init__(datasources, config)
+        self.logger = logger
+
+    # TODO: Spawning indexes from jobs?
+
+
+class RollbackHandlerContext(DipDupContext):
+    def __init__(
+        self,
+        datasources: Dict[str, Datasource],
+        config: DipDupConfig,
+        logger: FormattedLogger,
+        datasource: Datasource,
         from_level: int,
         to_level: int,
     ) -> None:
-        super().__init__(datasources, config, logger, None, datasource)
+        super().__init__(datasources, config)
+        self.logger = logger
+        self.datasource = datasource
         self.from_level = from_level
         self.to_level = to_level
