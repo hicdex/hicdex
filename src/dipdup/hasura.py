@@ -477,6 +477,6 @@ class HasuraGateway(HTTPGateway):
                 "columns": "*",
                 "filter": {},
                 "allow_aggregations": self._hasura_config.allow_aggregations,
-                "limit": self._hasura_config.select_limit,
+                # "limit": self._hasura_config.select_limit,
             },
         }
