@@ -18,19 +18,16 @@ install:
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
 
 isort:
-	poetry run isort src tests
+	poetry run isort src
 
 black:
-	poetry run black src tests
+	poetry run black src
 
 flake:
-	poetry run flakehell lint src tests
+	poetry run flakehell lint src
 
 mypy:
-	poetry run mypy src tests
-
-test:
-	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -v tests
+	poetry run mypy src
 
 cover:
 	poetry run diff-cover coverage.xml
