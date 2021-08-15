@@ -13,7 +13,7 @@ async def on_split_sign(
         sender = sign.data.sender_address
         objkt_id = sign.parameter.__root__
 
-        token = await models.Token.filter(id=int(objkt_id)).get()
+        token, _ = await models.Token.get_or_create(id=int(objkt_id))
         contract = await models.SplitContract.filter(contract_id=token.creator_id).get()  # type: ignore
 
         signature = models.Signatures(holder_id=sender, token_id=token.id)
