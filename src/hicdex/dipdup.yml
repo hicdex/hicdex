@@ -27,6 +27,9 @@ contracts:
   SPLIT_contract_sample_a:
     address: KT1K8A2cqqpQTEHYpY9R7aAybCdcM3tNpXyu
     typename: split_contract_a
+  SPLIT_sign:
+    address: KT1BcLnWRziLDNJNRn3phAANKrEBiXhytsMY
+    typename: split_sign
   OBJKTBID_english:
     address: KT1Wvk8fon9SgNEPQKewoSL2ziGGuCQebqZc
     typename: objktbid_english
@@ -163,6 +166,20 @@ indexes:
           - type: origination
             similar_to: SPLIT_contract_sample_a
     stateless: True
+
+  split_sign:
+    kind: operation
+    datasource: tzkt_mainnet
+    contracts:
+      - SPLIT_sign
+    types:
+      - transaction
+    handlers:
+      - callback: on_split_sign
+        pattern:
+          - type: transaction
+            destination: SPLIT_sign
+            entrypoint: sign
 
   objktbid:
     kind: operation

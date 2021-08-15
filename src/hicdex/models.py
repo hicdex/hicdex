@@ -53,6 +53,7 @@ class Token(Model):
     royalties = fields.SmallIntField(default=0)
     supply = fields.SmallIntField(default=0)
     hdao_balance = fields.BigIntField(default=0)
+    is_signed = fields.BooleanField(default=False)
 
     level = fields.BigIntField(default=0)
     timestamp = fields.DatetimeField(default=datetime.utcnow())
@@ -88,6 +89,15 @@ class TokenHolder(Model):
 
     class Meta:
         table = 'token_holder'
+
+
+class Signatures(Model):
+    token = fields.ForeignKeyField('models.Token', 'token_signatures', null=False, index=True)
+    holder = fields.ForeignKeyField('models.Holder', 'holder_signatures', null=False, index=True)
+
+    class Meta:
+        table = 'split_signatures'
+        unique_together = (("token", "holder"),)
 
 
 class Swap(Model):
