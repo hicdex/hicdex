@@ -16,9 +16,7 @@ async def on_split_sign(
         token, _ = await models.Token.get_or_create(id=int(objkt_id))
         contract = await models.SplitContract.filter(contract_id=token.creator_id).get()  # type: ignore
 
-        signature, _  = await models.Signatures.get_or_create(holder_id=sender, token_id=token.id)
-        #signature = models.Signatures(holder_id=sender, token_id=token.id)
-        #await signature.save()
+        await models.Signatures.get_or_create(holder_id=sender, token_id=token.id)
 
         core_participants = await models.Shareholder.filter(
             split_contract=contract, holder_type=models.ShareholderStatus.core_participant
