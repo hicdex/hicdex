@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from enum import Enum
 from logging import Logger
-from typing import Awaitable, List, Optional, Protocol
+from typing import Awaitable, List, Protocol
 
 from pyee import AsyncIOEventEmitter  # type: ignore
 
@@ -23,7 +23,7 @@ class OperationsCallback(Protocol):
 
 
 class BigMapsCallback(Protocol):
-    def __call__(self, datasource: 'IndexDatasource', big_maps: List[BigMapData]) -> Awaitable[None]:
+    def __call__(self, datasource: 'IndexDatasource', big_maps: List[BigMapData], block: HeadBlockData) -> Awaitable[None]:
         ...
 
 
@@ -46,7 +46,7 @@ class Datasource(HTTPGateway):
 
 
 class IndexDatasource(Datasource, AsyncIOEventEmitter):
-    def __init__(self, url: str, http_config: Optional[HTTPConfig] = None) -> None:
+    def __init__(self, url: str, http_config: HTTPConfig) -> None:
         HTTPGateway.__init__(self, url, http_config)
         AsyncIOEventEmitter.__init__(self)
 
@@ -73,8 +73,8 @@ class IndexDatasource(Datasource, AsyncIOEventEmitter):
     def emit_operations(self, operations: List[OperationData], block: HeadBlockData) -> None:
         super().emit(EventType.operations, datasource=self, operations=operations, block=block)
 
-    def emit_big_maps(self, big_maps: List[BigMapData]) -> None:
-        super().emit(EventType.big_maps, datasource=self, big_maps=big_maps)
+    def emit_big_maps(self, big_maps: List[BigMapData], block: HeadBlockData) -> None:
+        super().emit(EventType.big_maps, datasource=self, big_maps=big_maps, block=block)
 
     def emit_rollback(self, from_level: int, to_level: int) -> None:
         super().emit(EventType.rollback, datasource=self, from_level=from_level, to_level=to_level)
