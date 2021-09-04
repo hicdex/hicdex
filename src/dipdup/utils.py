@@ -236,6 +236,6 @@ def import_from(module: str, obj: str) -> Any:
 
 def remove_prefix(text: str, prefix: str) -> str:
     """Strip underscores"""
-    # if text.startswith(prefix):
-    #     text = text[len(prefix) :]
+    if prefix == 'public' and text.startswith(prefix):
+        text = text[len(prefix) :]
     return text.strip('_')

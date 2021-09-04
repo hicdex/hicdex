@@ -663,6 +663,7 @@ class HasuraConfig:
     connection_timeout: int = 5
     rest: bool = True
     http: Optional[HTTPConfig] = None
+    reset: bool = True
 
     @validator('url', allow_reuse=True)
     def valid_url(cls, v):
