@@ -336,7 +336,7 @@ class DipDup:
             await schema_state.save()
         elif schema_state.index_hash != schema_hash:
             self._logger.warning('Schema hash mismatch, reindexing')
-            await self._ctx.reindex()
+            #await self._ctx.reindex()
 
         await self._execute_sql_scripts(reindex=False)
 

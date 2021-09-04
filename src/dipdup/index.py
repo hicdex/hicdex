@@ -111,7 +111,7 @@ class Index:
 
         elif state.index_hash != index_config_hash:
             self._logger.warning('Config hash mismatch (config has been changed), reindexing')
-            await self._ctx.reindex()
+            #await self._ctx.reindex()
 
         self._logger.info('%s', f'{state.level=} {state.hash=}'.replace('state.', ''))
         # NOTE: No need to check indexes which are not synchronized.
@@ -119,7 +119,7 @@ class Index:
             block = await self._datasource.get_block(state.level)
             if state.hash != block.hash:
                 self._logger.warning('Block hash mismatch (missed rollback while dipdup was stopped), reindexing')
-                await self._ctx.reindex()
+                #await self._ctx.reindex()
 
         await state.save()
         self._state = state
