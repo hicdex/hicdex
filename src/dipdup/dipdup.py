@@ -304,7 +304,7 @@ class DipDup:
 
         if reindex:
             self._logger.warning('Started with `--reindex` argument, reindexing')
-            await self._ctx.reindex()
+            #await self._ctx.reindex()
 
         self._logger.info('Checking database schema')
         connection_name, connection = next(iter(Tortoise._connections.items()))
