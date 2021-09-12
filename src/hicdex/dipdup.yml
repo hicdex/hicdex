@@ -29,10 +29,13 @@ contracts:
     typename: split_contract_a
   SPLIT_contract_sample_b:
     address: KT1Nr12oNBxMXqrgWPaN7tedue8Q6GzzbiNg
-    typename: split_contract_b
+    typename: split_contract_a
   SPLIT_contract_sample_c:
     address: KT1Uaq7E1zcTg2BCDXWXBmuGoVFeLZkCkv3s
-    typename: split_contract_c
+    typename: split_contract_a
+  SPLIT_contract_sample_d:
+    address: KT1XNKmW2786FRK9rGr544JYcmLvcvwn3qEV
+    typename: split_contract_a
   SPLIT_sign:
     address: KT1BcLnWRziLDNJNRn3phAANKrEBiXhytsMY
     typename: split_sign
@@ -187,6 +190,10 @@ indexes:
         pattern:
           - type: origination
             similar_to: SPLIT_contract_sample_c
+      - callback: on_split_contract_origination_a
+        pattern:
+          - type: origination
+            similar_to: SPLIT_contract_sample_d
     stateless: True
 
   objktbid:
