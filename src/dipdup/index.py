@@ -218,7 +218,7 @@ class OperationIndex(Index):
             reused_hashes = received_hashes & expected_hashes
             if reused_hashes != expected_hashes:
                 self._logger.warning('Attempted a single level rollback, but arrived block differs from processed one')
-                #await self._ctx.reindex()
+                # await self._ctx.reindex()
 
             self._rollback_level = None
             self._last_hashes = set()

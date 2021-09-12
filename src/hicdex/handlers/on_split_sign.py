@@ -9,15 +9,15 @@ async def on_split_sign(
     ctx: HandlerContext,
     sign: Transaction[SignParameter, SplitSignStorage],
 ) -> None:
+    sender = sign.data.sender_address
+    objkt_id = sign.parameter.__root__
+
+    token, _ = await models.Token.get_or_create(id=int(objkt_id))
+    contract, _ = await models.SplitContract.get_or_create(contract_id=token.creator_id)  # type: ignore
+
+    await models.Signatures.get_or_create(holder_id=sender, token_id=token.id)
+
     try:
-        sender = sign.data.sender_address
-        objkt_id = sign.parameter.__root__
-
-        token, _ = await models.Token.get_or_create(id=int(objkt_id))
-        contract = await models.SplitContract.filter(contract_id=token.creator_id).get()  # type: ignore
-
-        await models.Signatures.get_or_create(holder_id=sender, token_id=token.id)
-
         core_participants = await models.Shareholder.filter(
             split_contract=contract, holder_type=models.ShareholderStatus.core_participant
         ).all()

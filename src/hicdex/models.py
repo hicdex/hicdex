@@ -28,8 +28,8 @@ class Holder(Model):
 
 class SplitContract(Model):
     contract = fields.ForeignKeyField('models.Holder', 'shares', index=True)
-    administrator = fields.CharField(36)
-    total_shares = fields.BigIntField()
+    administrator = fields.CharField(36, null=True)
+    total_shares = fields.BigIntField(null=True)
 
 
 class Shareholder(Model):
