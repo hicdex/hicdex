@@ -24,10 +24,12 @@ async def on_swap_v2(
         amount=swap.parameter.objkt_amount,
         amount_left=swap.parameter.objkt_amount,
         status=models.SwapStatus.ACTIVE,
+        opid=swap.data.id,
         ophash=swap.data.hash,
         level=swap.data.level,
         timestamp=swap.data.timestamp,
         royalties=swap.parameter.royalties,
+        contract_address=swap.data.target_address,
         contract_version=2,
         is_valid=is_valid,
     )

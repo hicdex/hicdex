@@ -101,7 +101,7 @@ class Signatures(Model):
 
 
 class Swap(Model):
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(index=True)
     creator = fields.ForeignKeyField('models.Holder', 'swaps', index=True)
     token = fields.ForeignKeyField('models.Token', 'swaps', index=True)
     price = fields.BigIntField()
@@ -109,9 +109,11 @@ class Swap(Model):
     amount_left = fields.SmallIntField()
     status = fields.IntEnumField(SwapStatus)
     royalties = fields.SmallIntField()
+    contract_address = fields.CharField(36)
     contract_version = fields.SmallIntField()
     is_valid = fields.BooleanField(default=True)
 
+    opid = fields.BigIntField(pk=True)
     ophash = fields.CharField(51)
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
