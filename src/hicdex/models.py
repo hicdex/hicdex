@@ -109,7 +109,8 @@ class Swap(Model):
     amount_left = fields.SmallIntField()
     status = fields.IntEnumField(SwapStatus)
     royalties = fields.SmallIntField()
-    contract_address = fields.CharField(36)
+    fa2 = fields.ForeignKeyField('models.FA2', 'swaps', index=True)
+    contract_address = fields.CharField(36, index=True)
     contract_version = fields.SmallIntField()
     is_valid = fields.BooleanField(default=True)
 

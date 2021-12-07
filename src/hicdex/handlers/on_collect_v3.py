@@ -1,13 +1,17 @@
-import hicdex.models as models
+from typing import Optional
+
+from dipdup.models import OperationData, Origination, Transaction
 from dipdup.context import HandlerContext
-from dipdup.models import Transaction
-from hicdex.types.hen_swap_v2.parameter.collect import CollectParameter
-from hicdex.types.hen_swap_v2.storage import HenSwapV2Storage
+
+import hicdex.models as models
+
+from hicdex.types.hen_swap_v3.parameter.collect import CollectParameter
+from hicdex.types.hen_swap_v3.storage import HenSwapV3Storage
 
 
-async def on_collect_v2(
+async def on_collect_v3(
     ctx: HandlerContext,
-    collect: Transaction[CollectParameter, HenSwapV2Storage],
+    collect: Transaction[CollectParameter, HenSwapV3Storage],
 ) -> None:
     swap = await models.Swap.filter(id=int(collect.parameter.__root__),contract_address=collect.data.target_address).get()
     seller = await swap.creator

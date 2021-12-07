@@ -149,3 +149,5 @@ secrets.env
 
 node_modules
 /PGDATA
+
+data

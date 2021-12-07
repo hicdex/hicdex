@@ -12,6 +12,8 @@ async def on_swap(
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=swap.data.sender_address)
     token = await models.Token.filter(id=int(swap.parameter.objkt_id)).get()
+    fa2, _ = await models.FA2.get_or_create(contract='KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton')
+
     swap_model = models.Swap(
         id=int(swap.storage.swap_id) - 1,  # type: ignore
         creator=holder,
@@ -25,6 +27,7 @@ async def on_swap(
         level=swap.data.level,
         timestamp=swap.data.timestamp,
         royalties=token.royalties,
+        fa2=fa2,
         contract_address=swap.data.target_address,
         contract_version=1,
     )
