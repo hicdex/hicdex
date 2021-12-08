@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from pydantic import BaseModel, Extra
 
@@ -25,4 +25,4 @@ class SplitSignStorageItem(BaseModel):
 
 
 class SplitSignStorage(BaseModel):
-    __root__: Dict[str, Any]
+    __root__: List[SplitSignStorageItem]

@@ -1,19 +1,23 @@
-import hicdex.models as models
-from dipdup.context import HandlerContext
+from typing import Optional
+
 from dipdup.models import Transaction
+from dipdup.context import HandlerContext
 from hicdex.metadata_utils import fix_other_metadata, fix_token_metadata
-from hicdex.types.hen_swap_v2.parameter.swap import SwapParameter
-from hicdex.types.hen_swap_v2.storage import HenSwapV2Storage
+
+import hicdex.models as models
+
+from hicdex.types.hen_swap_v3.parameter.swap import SwapParameter
+from hicdex.types.hen_swap_v3.storage import HenSwapV3Storage
 
 
-async def on_swap_v2(
+async def on_swap_v3(
     ctx: HandlerContext,
-    swap: Transaction[SwapParameter, HenSwapV2Storage],
+    swap: Transaction[SwapParameter, HenSwapV3Storage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=swap.data.sender_address)
     token, _ = await models.Token.get_or_create(id=int(swap.parameter.objkt_id))
     swap_id = int(swap.storage.counter) - 1
-    fa2, _ = await models.FA2.get_or_create(contract='KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton')
+    fa2, _ = await models.FA2.get_or_create(contract=swap.parameter.fa2)
 
     is_valid = swap.parameter.creator == token.creator_id and int(swap.parameter.royalties) == int(token.royalties)  # type: ignore
 
@@ -32,7 +36,7 @@ async def on_swap_v2(
         royalties=swap.parameter.royalties,
         fa2=fa2,
         contract_address=swap.data.target_address,
-        contract_version=2,
+        contract_version=3,
         is_valid=is_valid,
     )
     await swap_model.save()
