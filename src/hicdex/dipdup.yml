@@ -76,6 +76,7 @@ indexes:
     contracts:
       - HEN_swap_v1
       - HEN_swap_v2
+      - HEN_swap_v3
       - HEN_objkts
       - HEN_subjkts
       - HDAO_curation
