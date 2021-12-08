@@ -1,6 +1,6 @@
 from typing import Optional
 
-from dipdup.models import OperationData, Origination, Transaction
+from dipdup.models import Transaction
 from dipdup.context import HandlerContext
 
 import hicdex.models as models

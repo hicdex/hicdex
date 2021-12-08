@@ -1,7 +1,8 @@
 from typing import Optional
 
-from dipdup.models import OperationData, Origination, Transaction
+from dipdup.models import Transaction
 from dipdup.context import HandlerContext
+from hicdex.metadata_utils import fix_other_metadata, fix_token_metadata
 
 import hicdex.models as models
 
