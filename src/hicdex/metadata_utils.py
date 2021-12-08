@@ -152,35 +152,57 @@ async def fetch_metadata_bcd(token, failed_attempt=0):
     return {}
 
 
-async def fetch_subjkt_metadata_cf_ipfs(holder, failed_attempt=0):
+async def fetch_subjkt_metadata_cf_ipfs(holder, failed_attempt=0, alternative=False):
     addr = holder.metadata_file.replace('ipfs://', '')
+    url = f'https://cloudflare-ipfs.com/ipfs/{addr}'
+    if alternative:
+        url = f'https://ipfs.io/ipfs/{addr}'
+
     try:
         session = aiohttp.ClientSession()
-        data = await http_request(session, 'get', url=f'https://cloudflare-ipfs.com/ipfs/{addr}', timeout=10)
+        data = await http_request(session, 'get', url=url, timeout=10)
         await session.close()
         if data and not isinstance(data, list):
             write_subjkt_metadata_file(holder, data)
+            return data
+
+        if not alternative:
+            data = await fetch_subjkt_metadata_cf_ipfs(token, failed_attempt, True)
             return data
         with open(subjkt_path(holder.address), 'w') as write_file:
             json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
     except Exception:
         await session.close()
+        if not alternative:
+            data = await fetch_subjkt_metadata_cf_ipfs(token, failed_attempt, True)
+            return data
     return {}
 
 
-async def fetch_metadata_cf_ipfs(token, failed_attempt=0):
+async def fetch_metadata_cf_ipfs(token, failed_attempt=0, alternative=False):
     addr = token.metadata.replace('ipfs://', '')
+    url = f'https://cloudflare-ipfs.com/ipfs/{addr}'
+    if alternative:
+        url = f'https://ipfs.io/ipfs/{addr}'
+
     try:
         session = aiohttp.ClientSession()
-        data = await http_request(session, 'get', url=f'https://cloudflare-ipfs.com/ipfs/{addr}', timeout=10)
+        data = await http_request(session, 'get', url=url, timeout=10)
         await session.close()
         if data and not isinstance(data, list):
             write_metadata_file(token, data)
+            return data
+
+        if not alternative:
+            data = await fetch_metadata_cf_ipfs(token, failed_attempt, True)
             return data
         with open(file_path(token.id), 'w') as write_file:
             json.dump({'__failed_attempt': failed_attempt + 1}, write_file)
     except Exception:
         await session.close()
+        if not alternative:
+            data = await fetch_metadata_cf_ipfs(token, failed_attempt, True)
+            return data
     return {}
 
 
